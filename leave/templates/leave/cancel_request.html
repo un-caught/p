@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cancel Leave Request{% endblock %}
+
+{% block content %}
+<!-- Include Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<!-- Include custom CSS for leave dashboard -->
+<link rel="stylesheet" href="{% static 'css/leave-dashboard.css' %}">
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Cancel Leave Request</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <h5 class="alert-heading">Are you sure you want to cancel this leave request?</h5>
+            <p>This action cannot be undone. Once cancelled, you will need to submit a new request if needed.</p>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h6>Leave Details</h6>
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Leave Type</th>
+                        <td>{{ leave_request.leave_type.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Start Date</th>
+                        <td>{{ leave_request.start_date }}</td>
+                    </tr>
+                    <tr>
+                        <th>End Date</th>
+                        <td>{{ leave_request.end_date }}</td>
+                    </tr>
+                    <tr>
+                        <th>Number of Days</th>
+                        <td>{{ leave_request.days_requested }}</td>
+                    </tr>
+                    <tr>
+                        <th>Reason</th>
+                        <td>{{ leave_request.reason }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'leave:dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-times"></i> Confirm Cancellation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Process Leave Request{% endblock %}
+
+{% block content %}
+<!-- Include Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<!-- Include custom CSS for leave dashboard -->
+<link rel="stylesheet" href="{% static 'css/leave-dashboard.css' %}">
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Process Leave Request</h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Employee Information</h6>
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Name</th>
+                        <td>{{ leave_request.user.get_full_name|default:leave_request.user.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>Email</th>
+                        <td>{{ leave_request.user.email }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Leave Details</h6>
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Leave Type</th>
+                        <td>{{ leave_request.leave_type.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Start Date</th>
+                        <td>{{ leave_request.start_date }}</td>
+                    </tr>
+                    <tr>
+                        <th>End Date</th>
+                        <td>{{ leave_request.end_date }}</td>
+                    </tr>
+                    <tr>
+                        <th>Number of Days</th>
+                        <td>{{ leave_request.days_requested }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h6>Reason for Leave</h6>
+                <div class="p-3 border rounded">
+                    {{ leave_request.reason }}
+                </div>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="{{ form.status.id_for_label }}" class="form-label">Decision</label>
+                {{ form.status }}
+                {% if form.status.errors %}
+                <div class="text-danger">
+                    {{ form.status.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.rejection_reason.id_for_label }}" class="form-label">Rejection Reason (if applicable)</label>
+                {{ form.rejection_reason }}
+                <div class="form-text">Required if you are rejecting the request.</div>
+                {% if form.rejection_reason.errors %}
+                <div class="text-danger">
+                    {{ form.rejection_reason.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'leave:dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Submit Decision
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}

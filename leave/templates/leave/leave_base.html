@@ -1,0 +1,366 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Leave Management System{% endblock %}</title>
+
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <!-- Custom CSS for leave dashboard -->
+    <link rel="stylesheet" href="{% static 'css/leave-dashboard.css' %}">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            overflow-x: hidden;
+            transition: margin-left .3s ease-in-out; /* Smooth transition for main content */
+        }
+        .sidebar {
+            transition: width .3s ease-in-out; /* Smooth transition for sidebar width */
+            width: 250px; /* Default expanded width */
+        }
+        .sidebar.collapsed {
+            width: 70px; /* Collapsed width */
+        }
+        .sidebar.collapsed .sidebar-header img {
+            display: none; /* Hide logo when collapsed */
+        }
+        .sidebar.collapsed .sidebar-header #sidebarCollapse i {
+             transform: rotate(180deg); /* Rotate arrow */
+        }
+        .sidebar.collapsed .nav-link span,
+        .sidebar.collapsed .nav-link .dropdown-icon {
+            display: none; /* Hide text and dropdown arrows */
+        }
+        .sidebar.collapsed .nav-link i {
+            margin-right: 0 !important; /* Remove margin when text is hidden */
+            font-size: 1.2rem; /* Slightly larger icons */
+        }
+         .sidebar.collapsed .nav-link {
+            text-align: center; /* Center icons */
+        }
+        .sidebar.collapsed .collapse {
+            /* Ensure submenus don't expand weirdly when collapsed */
+            display: none !important;
+        }
+        .main-content {
+            transition: margin-left .3s ease-in-out; /* Match body transition */
+            margin-left: 250px; /* Default margin matching sidebar */
+        }
+        body.sidebar-collapsed .main-content {
+            margin-left: 70px; /* Margin when sidebar is collapsed */
+        }
+        body.sidebar-collapsed .sidebar {
+             width: 70px; /* Ensure sidebar width is set */
+        }
+        #sidebarExpand {
+            /* Style for the expand button if needed */
+        }
+    </style>
+</head>
+<body>
+
+
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-md-2 col-lg-2 d-md-block sidebar-bg sidebar collapse">
+            <div class="position-sticky pt-3 sidebar-sticky"> <!-- Added class -->
+                <!-- Sidebar Header: Logo and Collapse Button -->
+                <div class="sidebar-header d-flex justify-content-between align-items-center px-3 mb-3">
+                    <a href="{% url 'app:dashboard' %}"> <!-- Link logo to dashboard -->
+                        <img src="{% static 'img/falcon.png' %}" alt="Falcon Logo" height="30">
+                    </a>
+                    <button class="btn btn-sm btn-outline-light" id="sidebarCollapse">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </div>
+                <ul class="nav flex-column sidebar-menu">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'leave:dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <!-- Removed first Back to Main Dashboard link -->
+
+                    <!-- Leave Application Dropdown -->
+                    <li class="nav-item dropdown-item">
+                        <a class="nav-link dropdown-toggle {% if request.resolver_match.url_name == 'create_request' %}active{% endif %}" href="#leaveApplicationSubmenu" data-bs-toggle="collapse" aria-expanded="false">
+                            <!-- Icon removed -->
+                            <span>Leave Application</span>
+                            <i class="fas fa-chevron-right ms-auto dropdown-icon"></i>
+                        </a>
+                        <ul class="collapse nav flex-column {% if request.resolver_match.url_name == 'create_request' %}show{% endif %}" id="leaveApplicationSubmenu">
+                            <li class="nav-item">
+                                <a class="nav-link sub-link {% if request.resolver_match.url_name == 'create_request' %}active{% endif %}" href="{% url 'leave:create_request' %}">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    <span>New Application</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link sub-link" href="{% url 'leave:dashboard' %}">
+                                    <i class="fas fa-history me-2"></i>
+                                    <span>Leave History</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Relief Officer Dropdown -->
+                    <li class="nav-item dropdown-item">
+                        <a class="nav-link dropdown-toggle" href="#reliefOfficerSubmenu" data-bs-toggle="collapse" aria-expanded="false">
+                            <!-- Icon removed -->
+                            <span>Relief Officer</span>
+                            <i class="fas fa-chevron-right ms-auto dropdown-icon"></i>
+                        </a>
+                        <ul class="collapse nav flex-column" id="reliefOfficerSubmenu">
+                            <li class="nav-item">
+                                <a class="nav-link sub-link" href="{% url 'leave:dashboard' %}">
+                                    <i class="fas fa-tasks me-2"></i>
+                                    <span>Relief Officer Action</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- HOD/Line Manager Dropdown -->
+                    <li class="nav-item dropdown-item">
+                        <a class="nav-link dropdown-toggle" href="#hodSubmenu" data-bs-toggle="collapse" aria-expanded="false">
+                            <!-- Icon removed -->
+                            <span>HOD/Line Manager</span>
+                            <i class="fas fa-chevron-right ms-auto dropdown-icon"></i>
+                        </a>
+                        <ul class="collapse nav flex-column" id="hodSubmenu">
+                            <li class="nav-item">
+                                <a class="nav-link sub-link" href="{% url 'leave:dashboard' %}">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <span>View Pending Approvals</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link sub-link" href="{% url 'leave:dashboard' %}">
+                                    <i class="fas fa-user-clock me-2"></i>
+                                    <span>View Who is on Leave</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Administration Section -->
+                    {% if request.user.groups.all.0.name == 'manager' %}
+                    <li class="nav-item dropdown-item">
+                        <a class="nav-link dropdown-toggle" href="#adminSubmenu" data-bs-toggle="collapse" aria-expanded="false">
+                            <!-- Icon removed -->
+                            <span>Administration</span>
+                            <i class="fas fa-chevron-right ms-auto dropdown-icon"></i>
+                        </a>
+                        <ul class="collapse nav flex-column" id="adminSubmenu">
+                            <li class="nav-item">
+                                <a class="nav-link sub-link {% if request.resolver_match.url_name == 'manage_types' %}active{% endif %}" href="{% url 'leave:manage_types' %}">
+                                    <i class="fas fa-list me-2"></i>
+                                    <span>Manage Leave Types</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link sub-link {% if request.resolver_match.url_name == 'manage_balances' %}active{% endif %}" href="{% url 'leave:manage_balances' %}">
+                                    <i class="fas fa-balance-scale me-2"></i>
+                                    <span>Manage Leave Balances</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'app:dashboard' %}">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            <span>Back to Main Dashboard</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10 ms-sm-auto col-lg-10 px-0 main-content"> <!-- Added main-content class -->
+            <!-- Orange Header Bar -->
+            <div class="header-bar">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12 d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center"> <!-- Flex container for expand button and title -->
+                                <button class="btn btn-sm btn-outline-light me-2 d-none" id="sidebarExpand"> <!-- Initially hidden -->
+                                    <i class="fas fa-bars"></i>
+                                </button>
+                                <span id="headerTitle">Dashboard</span> <!-- Added ID for potential text change -->
+                            </div>
+                            <div>
+                                Welcome, {{ request.user.get_full_name|default:request.user.username }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-2">
+            {% block breadcrumb %}
+            <div class="mt-3 mb-4">
+                <a href="{% url 'app:dashboard' %}" class="text-primary">Home</a> / Leave Dashboard
+            </div>
+            {% endblock %}
+
+            {% if messages %}
+            <div class="messages mt-3">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}danger{% else %}info{% endif %} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block leave_content %}{% endblock %}
+
+            <!-- Footer -->
+            <div class="row mt-4">
+                <div class="col-md-12 text-center text-muted">
+                    <p>{% now "Y" %} &copy; Falcon Corporation - Leave Management System</p>
+                </div>
+            </div>
+            </div> <!-- End px-4 container -->
+        </div> <!-- End Main Content -->
+    </div> <!-- End row -->
+</div> <!-- End container-fluid -->
+<!-- Bootstrap JS for dropdown functionality -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var sidebarMenu = document.querySelector('.sidebar-menu');
+        var dropdownToggles = sidebarMenu.querySelectorAll('.dropdown-toggle');
+        var sidebar = document.querySelector('.sidebar');
+        var mainContent = document.querySelector('.main-content'); // Target the main content area
+        var sidebarCollapseBtn = document.getElementById('sidebarCollapse');
+        var sidebarExpandBtn = document.getElementById('sidebarExpand');
+        var body = document.body;
+
+        // --- Accordion Logic ---
+        dropdownToggles.forEach(function(toggle) {
+            var initialTargetId = toggle.getAttribute('href');
+            var initialSubmenu = document.querySelector(initialTargetId);
+            var initialIcon = toggle.querySelector('.dropdown-icon');
+            if (initialIcon && initialSubmenu && initialSubmenu.classList.contains('show')) {
+                initialIcon.classList.remove('fa-chevron-right');
+                initialIcon.classList.add('fa-chevron-down');
+            }
+
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                 // Prevent accordion toggle if sidebar is collapsed
+                if (body.classList.contains('sidebar-collapsed')) {
+                    // Optionally expand sidebar on click when collapsed
+                    // toggleSidebar();
+                    return;
+                }
+                var currentTargetId = this.getAttribute('href');
+                var currentSubmenu = document.querySelector(currentTargetId);
+                var currentIcon = this.querySelector('.dropdown-icon');
+
+                var openSubmenus = sidebarMenu.querySelectorAll('.collapse.show');
+                openSubmenus.forEach(function(openSubmenu) {
+                    if (openSubmenu !== currentSubmenu) {
+                        openSubmenu.classList.remove('show');
+                        var correspondingToggle = sidebarMenu.querySelector('[href="#' + openSubmenu.id + '"]');
+                        if (correspondingToggle) {
+                            correspondingToggle.setAttribute('aria-expanded', 'false');
+                            var otherIcon = correspondingToggle.querySelector('.dropdown-icon');
+                            if (otherIcon) {
+                                otherIcon.classList.remove('fa-chevron-down');
+                                otherIcon.classList.add('fa-chevron-right');
+                            }
+                        }
+                    }
+                });
+
+                if (currentSubmenu.classList.contains('show')) {
+                    currentSubmenu.classList.remove('show');
+                    this.setAttribute('aria-expanded', 'false');
+                    if (currentIcon) {
+                        currentIcon.classList.remove('fa-chevron-down');
+                        currentIcon.classList.add('fa-chevron-right');
+                    }
+                } else {
+                    currentSubmenu.classList.add('show');
+                    this.setAttribute('aria-expanded', 'true');
+                    if (currentIcon) {
+                        currentIcon.classList.remove('fa-chevron-right');
+                        currentIcon.classList.add('fa-chevron-down');
+                    }
+                }
+            });
+        });
+
+        // --- Sidebar Collapse/Expand Logic ---
+        function toggleSidebar() {
+            body.classList.toggle('sidebar-collapsed');
+            // sidebar.classList.toggle('collapsed'); // Body class handles width via CSS
+            sidebarExpandBtn.classList.toggle('d-none'); // Toggle visibility of expand button in header
+
+            // Hide/show collapse button in sidebar header (optional, could always show)
+            // sidebarCollapseBtn.classList.toggle('d-none');
+
+            // Close all submenus when collapsing
+            if (body.classList.contains('sidebar-collapsed')) {
+                var openSubmenus = sidebarMenu.querySelectorAll('.collapse.show');
+                openSubmenus.forEach(function(submenu) {
+                    submenu.classList.remove('show');
+                     var correspondingToggle = sidebarMenu.querySelector('[href="#' + submenu.id + '"]');
+                     if (correspondingToggle) {
+                         correspondingToggle.setAttribute('aria-expanded', 'false');
+                         var icon = correspondingToggle.querySelector('.dropdown-icon');
+                         if (icon) {
+                            icon.classList.remove('fa-chevron-down');
+                            icon.classList.add('fa-chevron-right');
+                         }
+                     }
+                });
+            }
+        }
+
+        if (sidebarCollapseBtn) {
+            sidebarCollapseBtn.addEventListener('click', toggleSidebar);
+        }
+        if (sidebarExpandBtn) {
+            sidebarExpandBtn.addEventListener('click', toggleSidebar);
+        }
+
+        // Optional: Persist state with localStorage
+        // function checkSidebarState() {
+        //     if (localStorage.getItem('sidebarCollapsed') === 'true') {
+        //         if (!body.classList.contains('sidebar-collapsed')) {
+        //             toggleSidebar(); // Apply collapsed state on load if needed
+        //         }
+        //     }
+        // }
+        // checkSidebarState(); // Check on load
+
+        // Modify toggleSidebar to include:
+        // if (body.classList.contains('sidebar-collapsed')) {
+        //     localStorage.setItem('sidebarCollapsed', 'true');
+        // } else {
+        //     localStorage.setItem('sidebarCollapsed', 'false');
+        // }
+
+    });
+</script>
+
+</body>
+</html>

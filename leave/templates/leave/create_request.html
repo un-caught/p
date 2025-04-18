@@ -1,0 +1,324 @@
+{% extends 'leave/leave_base.html' %}
+{% load static %}
+
+{% block title %}New Leave Application{% endblock %}
+
+{% block breadcrumb %}
+<div class="mt-3 mb-4">
+    <a href="{% url 'app:dashboard' %}" class="text-primary">Home</a> /
+    <a href="{% url 'leave:dashboard' %}" class="text-primary">Leave Application</a> /
+    New Application
+</div>
+{% endblock %}
+
+{% block leave_content %}
+<form method="post" enctype="multipart/form-data" id="leave-request-form">
+    {% csrf_token %}
+    {{ formset.management_form }} {# Management form for the formset #}
+
+    <div class="card mt-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#createLeaveApplication" role="button" aria-expanded="true" aria-controls="createLeaveApplication">
+            <h5 class="mb-0"><i class="fas fa-plus me-2"></i>CREATE NEW LEAVE APPLICATION</h5>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="collapse show" id="createLeaveApplication">
+            <div class="card-body">
+                {% if form.non_field_errors or formset.non_form_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                    {{ formset.non_form_errors }}
+                </div>
+                {% endif %}
+
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="{{ form.active_year.id_for_label }}" class="form-label">Select Active Year</label>
+                        {{ form.active_year }}
+                        {% if form.active_year.errors %}<div class="text-danger small">{{ form.active_year.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="{{ form.leave_type.id_for_label }}" class="form-label">Leave Type</label>
+                        {{ form.leave_type }}
+                        {% if form.leave_type.errors %}<div class="text-danger small">{{ form.leave_type.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Total days used</label>
+                        <input type="text" class="form-control bg-light" value="{{ total_days_used }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Outstanding</label>
+                        <input type="text" class="form-control bg-warning text-dark" value="{{ outstanding_days }}" readonly>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="{{ form.reason.id_for_label }}" class="form-label">{{ form.reason.label }}</label>
+                        {{ form.reason }}
+                        {% if form.reason.errors %}<div class="text-danger small">{{ form.reason.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
+                        {{ form.address }}
+                        {% if form.address.errors %}<div class="text-danger small">{{ form.address.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.phone_number.id_for_label }}" class="form-label">{{ form.phone_number.label }}</label>
+                        {{ form.phone_number }}
+                        {% if form.phone_number.errors %}<div class="text-danger small">{{ form.phone_number.errors }}</div>{% endif %}
+
+                        <label for="{{ form.attachment.id_for_label }}" class="form-label mt-2">{{ form.attachment.label }} <span class="text-danger small">(Important for Exam / Study Leave ) Images / PDF format</span></label>
+                        {{ form.attachment }}
+                        {% if form.attachment.errors %}<div class="text-danger small">{{ form.attachment.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row mb-3 align-items-end">
+                     <div class="col-md-4">
+                        <label for="leave_commencement_date_input" class="form-label">Leave Commencement (Start) Date</label>
+                        <input type="date" id="leave_commencement_date_input" class="form-control form-control-sm">
+                    </div>
+                     <div class="col-md-3">
+                        <label for="duration_input" class="form-label">Duration (No. of Days)</label>
+                        <input type="number" id="duration_input" class="form-control form-control-sm" min="1" value="0">
+                    </div>
+                    <div class="col-md-2">
+                         <button type="button" id="add-leave-period" class="btn btn-success btn-sm">Add days</button>
+                    </div>
+                </div>
+                 <div class="text-danger small mb-3">
+                    All casual leave should have justifications, exam leave must have exam timetable or documentation while sick leave must be accompanied with doctor's report
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card mt-3">
+         <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#leavePeriods" role="button" aria-expanded="true" aria-controls="leavePeriods">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>LEAVE APPLICATIONS START DATE / DURATION LIST <span class="small">(Add at least One (1) Start Date / Duration before Saving the application)</span></h5>
+             <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="collapse show" id="leavePeriods">
+            <div class="card-body">
+                 {% if formset.errors %}
+                    {% for dict_errors in formset.errors %}
+                        {% for field, errors in dict_errors.items %}
+                            <div class="alert alert-danger">
+                                {% if field != '__all__' %}{{ field|title }}: {% endif %}
+                                {{ errors|striptags }}
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                 {% endif %}
+
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">Del</th>
+                            <th style="width: 5%;">SNo.</th>
+                            <th>Start Date</th>
+                            <th>Duration</th>
+                            <th>End Date</th> {# Calculated display only #}
+                            <th>Resumption Date</th> {# Calculated display only #}
+                            <th style="width: 10%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leave-periods-body">
+                        {% for form in formset %}
+                        <tr class="leave-period-form">
+                            <td>
+                                {% if form.instance.pk and formset.can_delete %}
+                                    {{ form.DELETE }}
+                                {% endif %}
+                            </td>
+                            <td class="period-sno">{{ forloop.counter }}</td>
+                            <td>
+                                {{ form.id }} {# Hidden ID field #}
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}<div class="text-danger small">{{ form.start_date.errors }}</div>{% endif %}
+                            </td>
+                            <td>
+                                {{ form.duration }}
+                                {% if form.duration.errors %}<div class="text-danger small">{{ form.duration.errors }}</div>{% endif %}
+                            </td>
+                            <td class="period-end-date">
+                                {# Display calculated date if available #}
+                                {% if form.instance.pk and form.instance.end_date %}
+                                    {{ form.instance.end_date|date:"Y-m-d" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                             <td class="period-resumption-date">
+                                {% if form.instance.pk and form.instance.resumption_date %}
+                                    {{ form.instance.resumption_date|date:"Y-m-d" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if formset.can_delete %}
+                                <button type="button" class="btn btn-danger btn-sm delete-period-row" title="Delete this row">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                 <p class="text-danger small">Kindly ensure to check at least One (1) Leave Applications Start Date to be submitted!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+             <div class="row">
+                 <div class="col-md-6">
+                     <label for="{{ form.relief_officer.id_for_label }}" class="form-label">{{ form.relief_officer.label }}</label>
+                     {{ form.relief_officer }}
+                     {% if form.relief_officer.errors %}<div class="text-danger small">{{ form.relief_officer.errors }}</div>{% endif %}
+                 </div>
+                 <div class="col-md-6">
+                     <label for="{{ form.hod_line_manager.id_for_label }}" class="form-label">{{ form.hod_line_manager.label }}</label>
+                     {{ form.hod_line_manager }}
+                     {% if form.hod_line_manager.errors %}<div class="text-danger small">{{ form.hod_line_manager.errors }}</div>{% endif %}
+                 </div>
+             </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-footer text-end">
+             <a href="{% url 'leave:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Applications
+            </button>
+        </div>
+    </div>
+
+</form>
+
+{# Empty form template for JavaScript #}
+<template id="leave-period-template">
+    <tr class="leave-period-form">
+        <td>{{ formset.empty_form.DELETE }}</td>
+        <td class="period-sno"></td> {# SNo. will be set by JS #}
+        <td>
+            {{ formset.empty_form.id }}
+            {{ formset.empty_form.start_date }}
+        </td>
+        <td>{{ formset.empty_form.duration }}</td>
+        <td class="period-end-date">-</td>
+        <td class="period-resumption-date">-</td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm delete-period-row" title="Delete this row">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addPeriodButton = document.getElementById('add-leave-period');
+    const periodsBody = document.getElementById('leave-periods-body');
+    const template = document.getElementById('leave-period-template');
+    const formsetPrefix = '{{ formset.prefix }}'; // e.g., 'periods'
+    const totalFormsInput = document.getElementById(`id_${formsetPrefix}-TOTAL_FORMS`);
+
+    // Function to update row numbers
+    function updateRowNumbers() {
+        const rows = periodsBody.querySelectorAll('tr.leave-period-form');
+        rows.forEach((row, index) => {
+            const snoCell = row.querySelector('.period-sno');
+            if (snoCell) {
+                snoCell.textContent = index + 1;
+            }
+            // Ensure delete checkbox is visible only if can_delete is true
+             const deleteCheckbox = row.querySelector('input[type="checkbox"][id$="-DELETE"]');
+             const deleteButton = row.querySelector('.delete-period-row');
+             if (deleteCheckbox && deleteButton) {
+                 deleteButton.style.display = 'inline-block'; // Show button if checkbox exists
+             } else if (deleteButton) {
+                 deleteButton.style.display = 'none'; // Hide if no checkbox (e.g., empty form)
+             }
+        });
+    }
+
+    addPeriodButton.addEventListener('click', function() {
+        const startDateInput = document.getElementById('leave_commencement_date_input');
+        const durationInput = document.getElementById('duration_input');
+        const startDate = startDateInput.value;
+        const duration = durationInput.value;
+
+        if (!startDate || !duration || parseInt(duration) <= 0) {
+            alert('Please enter a valid Start Date and a positive Duration.');
+            return;
+        }
+
+        const formNum = parseInt(totalFormsInput.value);
+        // Clone the template content
+        const newRow = template.content.cloneNode(true).querySelector('tr');
+
+        // Update IDs and names for the new form
+        newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, formNum);
+
+        // Set the values for the new row
+        newRow.querySelector('input[id$="-start_date"]').value = startDate;
+        newRow.querySelector('input[id$="-duration"]').value = duration;
+
+        // Append the new row
+        periodsBody.appendChild(newRow);
+
+        // Increment the total forms count
+        totalFormsInput.value = formNum + 1;
+
+        // Clear the input fields
+        startDateInput.value = '';
+        durationInput.value = '0';
+
+        // Update row numbers and attach delete listener
+        updateRowNumbers();
+        attachDeleteListener(newRow.querySelector('.delete-period-row'));
+    });
+
+    // Function to attach delete listener
+    function attachDeleteListener(button) {
+        button.addEventListener('click', function() {
+            const row = button.closest('tr');
+            const deleteCheckbox = row.querySelector('input[type="checkbox"][id$="-DELETE"]');
+            if (deleteCheckbox) {
+                // Mark for deletion and hide
+                deleteCheckbox.checked = true;
+                row.style.display = 'none';
+            } else {
+                // If it's a newly added row without a PK (no delete checkbox yet), just remove it
+                row.remove();
+                 // Decrement total forms count ONLY if removing a newly added row
+                 totalFormsInput.value = parseInt(totalFormsInput.value) - 1;
+
+            }
+            updateRowNumbers(); // Update SNo. after deletion/hiding
+        });
+    }
+
+    // Attach delete listeners to existing rows
+    periodsBody.querySelectorAll('.delete-period-row').forEach(attachDeleteListener);
+
+    // Initial row numbering
+    updateRowNumbers();
+
+});
+</script>
+{% endblock %}

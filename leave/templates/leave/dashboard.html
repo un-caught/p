@@ -1,0 +1,308 @@
+{% extends 'leave/leave_base.html' %}
+{% load static %}
+
+{% block title %}Leave Management System{% endblock %}
+
+{% block breadcrumb %}
+<div class="mt-3 mb-4">
+    <a href="{% url 'app:dashboard' %}" class="text-primary">Home</a> / Leave Dashboard
+</div>
+{% endblock %}
+
+{% block leave_content %}
+<!-- Leave Dashboard Content -->
+<div class="pe-lg-4"> <!-- Add padding to the right on large screens to push content left -->
+    <div class="row g-3"> <!-- Adjusted gutter -->
+    <!-- Leave Days Entitled -->
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3"> <!-- Adjusted columns and margin -->
+        <div class="card leave-card h-100" style="background-color: #17a2b8;"> <!-- Added h-100 for consistent height -->
+            <div class="card-body text-white d-flex flex-column justify-content-between">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="leave-icon fs-2"> <!-- Increased icon size -->
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="leave-count fs-3 fw-bold"> <!-- Increased count size -->
+                        {% for balance in leave_balances %}
+                        {% if balance.leave_type.name == 'Annual Leave' %}
+                        {{ balance.initial_balance }}
+                        {% endif %}
+                        {% empty %}
+                        15 <!-- Default if no balance found -->
+                        {% endfor %}
+                    </div>
+                </div>
+                <h6 class="card-title text-center mt-auto">Leave Days Entitled</h6> <!-- Smaller title, centered, pushed down -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Annual Leave Used -->
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3"> <!-- Adjusted columns and margin -->
+        <div class="card leave-card h-100" style="background-color: #9c27b0;"> <!-- Added h-100 -->
+            <div class="card-body text-white d-flex flex-column justify-content-between">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="leave-icon fs-2">
+                        <i class="fas fa-thumbs-up"></i>
+                    </div>
+                    <div class="leave-count fs-3 fw-bold">
+                        {% for balance in leave_balances %}
+                        {% if balance.leave_type.name == 'Annual Leave' %}
+                        {{ balance.used_days }}
+                        {% endif %}
+                        {% empty %}
+                        0
+                        {% endfor %}
+                    </div>
+                </div>
+                <h6 class="card-title text-center mt-auto">Annual Leave Used</h6>
+            </div>
+        </div>
+    </div>
+
+    <!-- Casual Leave Used -->
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3"> <!-- Adjusted columns and margin -->
+        <div class="card leave-card h-100" style="background-color: #4CAF50;"> <!-- Added h-100 -->
+            <div class="card-body text-white d-flex flex-column justify-content-between">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="leave-icon fs-2">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="leave-count fs-3 fw-bold">
+                        {% for balance in leave_balances %}
+                        {% if balance.leave_type.name == 'Casual Leave' %}
+                        {{ balance.used_days }}
+                        {% endif %}
+                        {% empty %}
+                        0
+                        {% endfor %}
+                    </div>
+                </div>
+                <h6 class="card-title text-center mt-auto">Casual Leave Used</h6>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sick Leave Used -->
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3"> <!-- Adjusted columns and margin -->
+        <div class="card leave-card h-100" style="background-color: #2196F3;"> <!-- Added h-100 -->
+            <div class="card-body text-white d-flex flex-column justify-content-between">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="leave-icon fs-2">
+                        <i class="fas fa-medkit"></i> <!-- Changed icon to fa-medkit for Sick Leave -->
+                    </div>
+                    <div class="leave-count fs-3 fw-bold">
+                        {% for balance in leave_balances %}
+                        {% if balance.leave_type.name == 'Sick Leave' %}
+                        {{ balance.used_days }}
+                        {% endif %}
+                        {% empty %}
+                        0
+                        {% endfor %}
+                    </div>
+                </div>
+                <h6 class="card-title text-center mt-auto">Sick Leave Used</h6>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam/Study Leave -->
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3"> <!-- Adjusted columns and margin -->
+        <div class="card leave-card h-100" style="background-color: #FF9800;"> <!-- Added h-100 -->
+            <div class="card-body text-white d-flex flex-column justify-content-between">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="leave-icon fs-2">
+                        <i class="fas fa-book"></i> <!-- Changed icon to fa-book for Exam/Study Leave -->
+                    </div>
+                    <div class="leave-count fs-3 fw-bold">
+                        {% for balance in leave_balances %}
+                        {% if balance.leave_type.name == 'Exam/Study Leave' %}
+                        {{ balance.used_days }}
+                        {% endif %}
+                        {% empty %}
+                        0
+                        {% endfor %}
+                    </div>
+                </div>
+                <h6 class="card-title text-center mt-auto">Exam/Study Leave</h6>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compassionate Leave -->
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3"> <!-- Adjusted columns and margin -->
+        <div class="card leave-card h-100" style="background-color: #9E9E9E;"> <!-- Added h-100 -->
+            <div class="card-body text-white d-flex flex-column justify-content-between">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="leave-icon fs-2">
+                        <i class="fas fa-heart"></i> <!-- Changed icon to fa-heart for Compassionate Leave -->
+                    </div>
+                    <div class="leave-count fs-3 fw-bold">
+                        {% for balance in leave_balances %}
+                        {% if balance.leave_type.name == 'Compassionate Leave' %}
+                        {{ balance.used_days }}
+                        {% endif %}
+                        {% empty %}
+                        0
+                        {% endfor %}
+                    </div>
+                </div>
+                <h6 class="card-title text-center mt-auto">Compassionate Leave</h6>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Maternity Leave -->
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-3">
+        <div class="card leave-card h-100" style="background-color: #ffc107;"> <!-- Yellow color -->
+            <div class="card-body text-white d-flex flex-column justify-content-between">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="leave-icon fs-2">
+                        <i class="fas fa-baby"></i> <!-- Icon for Maternity Leave -->
+                    </div>
+                    <div class="leave-count fs-3 fw-bold">
+                        {% for balance in leave_balances %}
+                        {% if balance.leave_type.name == 'Maternity Leave' %}
+                        {{ balance.used_days }}
+                        {% endif %}
+                        {% empty %}
+                        0
+                        {% endfor %}
+                    </div>
+                </div>
+                <h6 class="card-title text-center mt-auto">Maternity Leave</h6>
+            </div>
+        </div>
+    </div>
+
+    </div> <!-- End row g-3 -->
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <a href="{% url 'leave:create_request' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> New Leave Request
+            </a>
+            <a href="{% url 'app:dashboard' %}" class="btn btn-secondary ms-2">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Pending Requests Section -->
+    {% if pending_requests %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Pending Leave Requests</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Leave Type</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Days</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in pending_requests %}
+                                <tr>
+                                    <td>{{ request.user.get_full_name|default:request.user.username }}</td>
+                                    <td>{{ request.leave_type.name }}</td>
+                                    <td>{{ request.start_date }}</td>
+                                    <td>{{ request.end_date }}</td>
+                                    <td>{{ request.days_requested }}</td>
+                                    <td><span class="badge bg-warning">{{ request.status|title }}</span></td>
+                                    <td>
+                                        <a href="{% url 'leave:view_request' request.pk %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{% url 'leave:approve_request' request.pk %}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check"></i> Process
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Your Leave Requests Section -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> Your Leave Requests</h5>
+                </div>
+                <div class="card-body">
+                    {% if user_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Leave Type</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Days</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in user_requests %}
+                                <tr>
+                                    <td>{{ request.leave_type.name }}</td>
+                                    <td>{{ request.start_date }}</td>
+                                    <td>{{ request.end_date }}</td>
+                                    <td>{{ request.days_requested }}</td>
+                                    <td>
+                                        {% if request.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% elif request.status == 'approved' %}
+                                        <span class="badge bg-success">Approved</span>
+                                        {% elif request.status == 'rejected' %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                        {% elif request.status == 'cancelled' %}
+                                        <span class="badge bg-secondary">Cancelled</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'leave:view_request' request.pk %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        {% if request.status == 'pending' %}
+                                        <a href="{% url 'leave:cancel_request' request.pk %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <strong>Info!</strong> You haven't made any leave requests yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div> <!-- End pe-lg-4 -->
+
+{% endblock %}
