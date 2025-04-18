@@ -16,8 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from app import views
+
+handler404 = 'app.views.custom_404'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('app.urls')),
-]
+    path('', include('app.urls', namespace='app')),
+    path('helpdesk/', include('helpdesk.urls', namespace='helpdesk')),
+    path('leave/', include('leave.urls', namespace='leave')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

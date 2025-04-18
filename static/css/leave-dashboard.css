@@ -1,0 +1,178 @@
+/* Header Bar Styles */
+.header-bar {
+    background-color: #f26522; /* Orange color */
+    color: white;
+    padding: 15px 20px;
+    font-size: 1.2rem;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.header-bar .fa-bars {
+    font-size: 1.4rem;
+    vertical-align: middle;
+}
+
+/* Modern Leave Dashboard Styles */
+.leave-card {
+    border: none;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    height: 120px;
+    margin-bottom: 10px;
+}
+
+.leave-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.leave-card .card-body {
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.leave-card .card-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+.leave-icon {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+.leave-count {
+    font-size: 3.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-top: 0.25rem;
+    line-height: 1;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 60px 0 0; /* Increased to accommodate the header */
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar-bg {
+    background-color: #006064 !important;
+    color: #fff;
+}
+
+/* Sidebar width */
+@media (min-width: 992px) {
+    .col-lg-2 {
+        flex: 0 0 auto;
+        width: 16.66666667%;
+    }
+    .col-lg-10 {
+        flex: 0 0 auto;
+        width: 83.33333333%;
+    }
+}
+
+.sidebar-menu {
+    padding-left: 0;
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #fff;
+    padding: .75rem 1rem;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .nav-link.active {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Icon styling */
+.sidebar i {
+    width: 20px;
+    text-align: center;
+    margin-right: 10px;
+    font-size: 1rem;
+}
+
+.sidebar .dropdown-toggle {
+    position: relative;
+}
+
+.sidebar .dropdown-icon {
+    position: absolute;
+    right: 10px;
+    transition: transform 0.3s;
+    font-size: 0.7rem;
+}
+
+.sidebar .dropdown-toggle[aria-expanded="true"] .dropdown-icon {
+    transform: rotate(180deg);
+}
+
+.sidebar .sub-link {
+    padding-left: 2.5rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.sidebar .sub-link:hover {
+    color: #fff !important;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Submenu background */
+.sidebar .collapse {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-heading {
+    font-size: .75rem;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 0.75rem 1rem;
+    margin-bottom: 0;
+}
+
+/* Main Content Styles */
+.ms-sm-auto {
+    margin-left: auto !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: static;
+        height: auto;
+        padding-top: 0;
+    }
+
+    .sidebar .nav-link {
+        padding: .5rem 1rem;
+    }
+}
+
+

@@ -1,0 +1,96 @@
+{% extends 'helpbase.html' %}
+{% block title %}Dashboard{% endblock title %}
+
+{% block content %}
+    <style>
+        /* Custom div styling */
+        .form-wrapper {
+            border: 2px solid #4a8bc2;  /* Border width of 2px and color #4a8bc2 */
+            padding: 20px;
+        }
+	.form-container .head {
+            background-color: #4a8bc2;  /* Same color as the border */
+            margin-top: -2px;  /* Removes the gap between the header and the border */
+            border-top-left-radius: 2px;
+            border-top-right-radius: 2px;
+            padding: 10px;
+        }
+	.submit-btn {
+            background-color: #dc5d3a;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>	
+<nav class="breadcrumb bg-light p-2  mt-2 mb-2" style="margin: 5px;">
+    <a href="{% url 'helpdesk:home' %}" class="breadcrumb-item text-dark">Home</a> 
+    <span class="breadcrumb-item active">New Ticket for Others</span>
+</nav>
+    <div class="container">
+	<div class="form-wrapper">
+        <div class="head text-white p-2 font-weight-bold mb-4" style="background-color: #4a8bc2; margin-top: -20px; margin-left: -20px; margin-right: -20px;">
+		<i class="fas fa-bars"></i>
+            HELP REQUEST DETAILS
+        </div>
+
+        <!-- Form wrapper with border and border-radius -->
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row mb-4 d-flex align-items-center">
+                <div class="col-md-3" style="margin-right: 10px;">
+                    <label for="user">Ticket For Whom</label>
+                    <select id="user" name="user" class="form-control" style="border-radius: 0px;">
+                        <option value="">SELECT STAFF</option>
+                        {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date_requested">Date Requested by Staff</label>
+                    <input type="date" id="date_requested" name="date_requested" class="form-control" style="border-radius: 0px;" required />
+                </div>
+            </div>
+        
+            <div class="form-row mb-4 d-flex align-items-center">
+                <div class="col-md-3" style="margin-right: 3px;">
+                    <label for="location">Location</label>
+                    {{ form.location }}
+                </div>
+                <div class="col-md-3" style="margin-right: 3px;">
+                    <label for="category">Incidence Category</label>
+                    {{ form.category }}
+                </div>
+                <div class="col-md-3" style="margin-right: 3px;">
+                    <label for="issue">Types Of Issues</label>
+                    {{ form.issue }}
+                </div>
+                <div class="col-md-3">
+                    <label for="priority">Priorities</label>
+                    {{ form.priority }}
+                </div>
+            </div>
+        
+            <div class="mb-4">
+                <label for="subject">Subject</label>
+                {{ form.subject }}
+            </div>
+        
+            <div class="mb-4">
+                <label for="complaints">Complaints</label>
+                {{ form.complaint }}
+            </div>
+        
+            <div class="mb-4">
+                <label for="attachment">Attachment</label>
+                {{ form.attachment }}
+                <small class="text-muted mt-1">Attachment file here: .pdf, .jpg, .jpeg, .gif, .png</small>
+            </div>
+        
+            <div class="mt-3">
+                <button type="submit" class="btn submit-btn" style="border-radius: 0px;">Submit Ticket</button>
+            </div>
+        </form>
+        
+    
+{% endblock content %}

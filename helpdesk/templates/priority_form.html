@@ -1,0 +1,53 @@
+{% extends 'helpbase.html' %}
+{% block title %}Dashboard{% endblock title %}
+
+{% block content %}
+<style>
+    /* Disable the hover zoom-in effect on the card */
+    .card.no-hover:hover {
+        box-shadow: none !important; /* Remove shadow */
+        transform: none !important; /* Remove zoom or scale effect */
+    }
+</style>
+<div class="container mt-5">
+    <!-- Card for the form -->
+    <div class="card no-hover">
+        <div class="card-header bg-primary text-white">
+            <h4><i class="fas fa-plus-circle"></i> Create a New Priority</h4>
+        </div>
+        <div class="card-body">
+            <!-- Form Starts Here -->
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Check for errors and display them -->
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Oops! There were some errors.</strong>
+                        <ul>
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                
+                <!-- Form Fields -->
+                {{ form.as_p }}  <!-- Renders form fields as paragraph elements -->
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-save"></i> Save Priority
+                </button>
+                <!-- Cancel Button -->
+                <a href="{% url 'helpdesk:priority-list' %}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
