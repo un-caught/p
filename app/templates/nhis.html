@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% block title %}NHIR Form{% endblock title %}
 
+{% block extra_head %}
+<meta name="no-auto-refresh" content="true">
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
     <form method="POST">
@@ -10,6 +14,7 @@
         <div class="mb-3">
             <label for="location" class="form-label">1. Exact Location</label>
             {{ form.location }}
+            <small class="form-text text-muted">Note: You can only select your assigned location ({{ request.user.member.location }})</small>
         </div>
         <div class="mb-3">
             <label for="Date" class="form-label">2. Date/Time</label>
@@ -36,21 +41,21 @@
             <label class="form-label">6. Description Of Observations</label>
             {{ form.observation }}
         </div>
-        
+
 
         <h3>Section 4: Immediate Action Taken</h3>
         <div class="mb-3">
             <label class="form-label">7. Immediate Action Taken</label>
             {{ form.action_taken }}
         </div>
-        
- 
+
+
         <h3>Section 5: Preventive Action</h3>
         <div class="mb-3">
             <label class="form-label">8. Futher Action To Prevent Reccurence</label>
             {{ form.preventive_action }}
         </div>
-       
+
 
          <h3>Section 6: Responsible Party And Target</h3>
         <div class="mb-3">

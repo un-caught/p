@@ -36,7 +36,7 @@
                 <h1 class="text-center mb-4 mt-2 pt-3">Form Submission Report</h1>
                 <!-- Filters -->
                 <div class="filters mb-4">
-                    <form method="get" class="row g-3" action="{% url 'form_report' %}">
+                    <form method="get" class="row g-3" action="{% url 'app:form_report' %}">
                         <div class="col-md-6">
                             <label for="startDate" class="form-label">Start Date:</label>
                             <input type="date" name="startDate" class="form-control" value="{{ start_date }}">

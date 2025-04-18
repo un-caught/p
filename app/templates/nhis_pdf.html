@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="no-auto-refresh" content="true">
+    <meta charset="UTF-8">
+    <title>NHIS Form {{ submission.form_number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 10px;
+        }
+        .logo {
+            max-width: 150px;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #0056b3;
+            margin: 0;
+            font-size: 24px;
+        }
+        .form-number {
+            font-size: 18px;
+            color: #555;
+            margin-top: 5px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            background-color: #f2f2f2;
+            padding: 5px 10px;
+            font-weight: bold;
+            border-left: 4px solid #0056b3;
+        }
+        .row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .col {
+            flex: 1;
+            padding: 0 10px;
+        }
+        .label {
+            font-weight: bold;
+            color: #555;
+        }
+        .value {
+            margin-top: 3px;
+        }
+        .approval-section {
+            margin-top: 30px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        .approval-item {
+            margin-bottom: 15px;
+        }
+        .approval-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        .status-approved {
+            background-color: #28a745;
+        }
+        .status-pending {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .status-rejected {
+            background-color: #dc3545;
+        }
+        .stamp {
+            position: absolute;
+            top: 100px;
+            right: 50px;
+            border: 3px solid #28a745;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: rotate(-15deg);
+            opacity: 0.7;
+        }
+        .stamp-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .stamp-date {
+            font-size: 12px;
+            color: #28a745;
+        }
+        .stamp-signature {
+            font-size: 10px;
+            font-style: italic;
+            color: #28a745;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{{ logo_path }}" alt="Company Logo" class="logo">
+        <h1>Hazard Identification Form (NHIS)</h1>
+        <div class="form-number">Form Number: {{ submission.form_number }}</div>
+    </div>
+
+    {% if submission.status == 'approved' %}
+    <div class="stamp">
+        <div class="stamp-title">APPROVED</div>
+        <div class="stamp-date">{{ submission.manager_approved_at|date:"d M Y" }}</div>
+        <div class="stamp-signature">{{ submission.manager_approved_by.get_full_name }}</div>
+    </div>
+    {% endif %}
+
+    <div class="section">
+        <div class="section-title">General Information</div>
+        <div class="row">
+            <div class="col">
+                <div class="label">Submitted By</div>
+                <div class="value">{{ submission.user.get_full_name }}</div>
+            </div>
+            <div class="col">
+                <div class="label">Date Submitted</div>
+                <div class="value">{{ submission.date_submitted|date:"F d, Y H:i" }}</div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="label">Location</div>
+                <div class="value">{{ submission.location }}</div>
+            </div>
+            <div class="col">
+                <div class="label">Date</div>
+                <div class="value">{{ submission.date|date:"F d, Y" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Hazard Identification</div>
+        <div class="row">
+            <div class="col">
+                <div class="label">Hazards</div>
+                <div class="value">
+                    <ul>
+                        {% for hazard in submission.hazard.all %}
+                            <li>{{ hazard.name }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="col">
+                <div class="label">Risk Type</div>
+                <div class="value">{{ submission.get_risk_type_display }}</div>
+
+                <div class="label" style="margin-top: 10px;">RAM Rating</div>
+                <div class="value">{{ submission.get_ram_rating_display }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Observation</div>
+        <div class="value">{{ submission.observation }}</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Immediate Action Taken</div>
+        <div class="value">{{ submission.action_taken }}</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Preventive Action</div>
+        <div class="value">{{ submission.preventive_action }}</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Responsible Party and Target</div>
+        <div class="row">
+            <div class="col">
+                <div class="label">Responsible Party</div>
+                <div class="value">{{ submission.get_responsible_party_display }}</div>
+            </div>
+            <div class="col">
+                <div class="label">Target Date</div>
+                <div class="value">{{ submission.target_date|date:"F d, Y" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Observed By</div>
+        <div class="row">
+            <div class="col">
+                <div class="label">Name</div>
+                <div class="value">{{ submission.observed_by }}</div>
+            </div>
+            <div class="col">
+                <div class="label">Department</div>
+                <div class="value">{{ submission.get_dept_display }}</div>
+            </div>
+            <div class="col">
+                <div class="label">Date</div>
+                <div class="value">{{ submission.observed_date|date:"F d, Y" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="approval-section">
+        <div class="section-title">Approval Status</div>
+
+        <div class="approval-item">
+            <div class="label">Submitted by {{ submission.user.get_full_name }}</div>
+            <div class="value">
+                <span class="approval-status status-approved">Completed</span>
+                <span>{{ submission.date_submitted|date:"F d, Y H:i" }}</span>
+            </div>
+        </div>
+
+        <div class="approval-item">
+            <div class="label">Supervisor Approval</div>
+            <div class="value">
+                {% if submission.supervisor_approved_by %}
+                    <span class="approval-status status-approved">Approved</span>
+                    <span>{{ submission.supervisor_approved_at|date:"F d, Y H:i" }} by {{ submission.supervisor_approved_by.get_full_name }}</span>
+                {% elif submission.status == 'awaiting_supervisor' %}
+                    <span class="approval-status status-pending">Pending</span>
+                {% elif submission.status == 'rejected_by_supervisor' %}
+                    <span class="approval-status status-rejected">Rejected</span>
+                    <span>{{ submission.rejected_at|date:"F d, Y H:i" }} by {{ submission.rejected_by.get_full_name }}</span>
+                {% else %}
+                    <span class="approval-status status-pending">N/A</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="approval-item">
+            <div class="label">Manager Approval</div>
+            <div class="value">
+                {% if submission.manager_approved_by %}
+                    <span class="approval-status status-approved">Approved</span>
+                    <span>{{ submission.manager_approved_at|date:"F d, Y H:i" }} by {{ submission.manager_approved_by.get_full_name }}</span>
+                {% elif submission.status == 'awaiting_manager' %}
+                    <span class="approval-status status-pending">Pending</span>
+                {% elif submission.status == 'rejected_by_manager' %}
+                    <span class="approval-status status-rejected">Rejected</span>
+                    <span>{{ submission.rejected_at|date:"F d, Y H:i" }} by {{ submission.rejected_by.get_full_name }}</span>
+                {% else %}
+                    <span class="approval-status status-pending">N/A</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if submission.status == 'rejected_by_supervisor' or submission.status == 'rejected_by_manager' %}
+    <div class="section">
+        <div class="section-title" style="background-color: #f8d7da; border-left-color: #dc3545;">Rejection Information</div>
+        <div class="row">
+            <div class="col">
+                <div class="label">Rejected By</div>
+                <div class="value">{{ submission.rejected_by.get_full_name }}</div>
+            </div>
+            <div class="col">
+                <div class="label">Rejection Date</div>
+                <div class="value">{{ submission.rejected_at|date:"F d, Y H:i" }}</div>
+            </div>
+        </div>
+        <div class="label">Reason</div>
+        <div class="value">{{ submission.rejection_reason }}</div>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>This document was generated on {{ current_date|date:"F d, Y H:i" }}</p>
+        <p>&copy; {{ current_date|date:"Y" }} SAAF. All rights reserved.</p>
+    </div>
+</body>
+</html>

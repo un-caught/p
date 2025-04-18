@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="no-auto-refresh" content="true">
+    <meta charset="UTF-8">
+    <title>PTW Form {{ submission.form_number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .form-number {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-left: 4px solid #007bff;
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .approval-section {
+            margin-top: 40px;
+            page-break-inside: avoid;
+        }
+        .approval-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .stamp {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 100px;
+            height: auto;
+            opacity: 0.7;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        .comments {
+            margin-top: 30px;
+        }
+        .comment {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .comment-date {
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Permit to Work (PTW) Form</h1>
+        <div class="form-number">Form Number: {{ submission.form_number }}</div>
+    </div>
+    
+    <div class="section">
+        <h2>Form Information</h2>
+        <table>
+            <tr>
+                <th width="30%">Submitted By</th>
+                <td>{{ submission.user.get_full_name }}</td>
+            </tr>
+            <tr>
+                <th>Date Submitted</th>
+                <td>{{ submission.date_submitted }}</td>
+            </tr>
+            <tr>
+                <th>Location</th>
+                <td>{{ submission.location }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{{ submission.get_status_display }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2>Work Details</h2>
+        <table>
+            <tr>
+                <th width="30%">Work Description</th>
+                <td>{{ submission.work_description }}</td>
+            </tr>
+            <tr>
+                <th>Work Location</th>
+                <td>{{ submission.work_location }}</td>
+            </tr>
+            <tr>
+                <th>Start Date</th>
+                <td>{{ submission.start_date }}</td>
+            </tr>
+            <tr>
+                <th>End Date</th>
+                <td>{{ submission.end_date }}</td>
+            </tr>
+            <tr>
+                <th>Work Type</th>
+                <td>{{ submission.work_type }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Add other PTW form sections here -->
+    
+    <div class="approval-section">
+        <h2>Approval Information</h2>
+        
+        <div class="approval-box">
+            <h3>Supervisor Approval</h3>
+            {% if submission.supervisor_approved_by %}
+                <p><strong>Approved by:</strong> {{ submission.supervisor_approved_by.get_full_name }}</p>
+                <p><strong>Date:</strong> {{ submission.supervisor_approved_at }}</p>
+                {% if submission.status == 'approved' or submission.status == 'awaiting_manager' or submission.status == 'manager_signed' %}
+                    <img class="stamp" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Checkmark.svg/1200px-Checkmark.svg.png" alt="Approved">
+                {% endif %}
+            {% else %}
+                <p>Not yet approved by supervisor</p>
+            {% endif %}
+        </div>
+        
+        <div class="approval-box">
+            <h3>Manager Approval</h3>
+            {% if submission.manager_approved_by %}
+                <p><strong>Approved by:</strong> {{ submission.manager_approved_by.get_full_name }}</p>
+                <p><strong>Date:</strong> {{ submission.manager_approved_at }}</p>
+                {% if submission.status == 'approved' %}
+                    <img class="stamp" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Checkmark.svg/1200px-Checkmark.svg.png" alt="Approved">
+                {% endif %}
+            {% else %}
+                <p>Not yet approved by manager</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if submission.comments.all %}
+    <div class="comments">
+        <h2>Comments</h2>
+        {% for comment in submission.comments.all %}
+            <div class="comment">
+                <div class="comment-header">
+                    <span>{{ comment.user.get_full_name }}</span>
+                    <span class="comment-date">{{ comment.created_at }}</span>
+                </div>
+                <div class="comment-content">
+                    {{ comment.comment }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        <p>This document was generated on {{ now }} from the PTW Management System.</p>
+        <p>Form {{ submission.form_number }} - Page 1 of 1</p>
+    </div>
+</body>
+</html>

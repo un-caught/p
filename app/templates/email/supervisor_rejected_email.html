@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>NHIS Form Rejected by Supervisor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            background-color: #0056b3;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .info-table th, .info-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .info-table th {
+            background-color: #f2f2f2;
+        }
+        .rejection-info {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 10px;
+            margin: 15px 0;
+        }
+        .next-steps {
+            background-color: #e2f3f7;
+            border-left: 4px solid #17a2b8;
+            padding: 10px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>NHIS Form Rejected by Supervisor</h2>
+    </div>
+    <div class="content">
+        <p>NHIS Form {{ form_number }} has been rejected by a supervisor.</p>
+        
+        <div class="rejection-info">
+            <p><strong>Rejected By:</strong> {{ rejector }}</p>
+            <p><strong>Rejection Date:</strong> {{ rejection_date }}</p>
+            <p><strong>Reason for Rejection:</strong> {{ rejection_reason }}</p>
+        </div>
+        
+        <table class="info-table">
+            <tr>
+                <th>Form Number</th>
+                <td>{{ form_number }}</td>
+            </tr>
+            <tr>
+                <th>Submitted By</th>
+                <td>{{ submitter }}</td>
+            </tr>
+            <tr>
+                <th>Location</th>
+                <td>{{ location }}</td>
+            </tr>
+            <tr>
+                <th>Date</th>
+                <td>{{ date }}</td>
+            </tr>
+        </table>
+        
+        <div class="next-steps">
+            <p><strong>Next Steps:</strong> Please review the rejection reason, make the necessary changes, and resubmit the form.</p>
+        </div>
+        
+        <a href="{{ site_url }}/nhis/{{ form.id }}/" class="button">View Rejected Form</a>
+    </div>
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; {{ current_year }} SAAF. All rights reserved.</p>
+    </div>
+</body>
+</html>

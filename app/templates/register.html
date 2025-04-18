@@ -2,6 +2,7 @@
 <!Doctype html>
 <head>
     <title>Registration Page</title>
+    <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -9,7 +10,7 @@
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #123d16;
+            background-color: #00351F;
             color: white;
         }
         .registration-container {
@@ -37,60 +38,98 @@
 </head>
 <body>
     <div class="d-flex justify-content-between p-4 small">
-        <a href="#" class="link">Access SharePoint Portal</a>
-        <a href="#" class="link">Access Falcon Website</a>
+        <a href="https://sharepoint.falcon-corporation.com/" target="blank" class="link">Access SharePoint Portal</a>
+        <a href="https://www.falcon-corporation.com/fcl/home/" target="blank" class="link">Access Falcon Website</a>
     </div>
-    <div class="registration-container">
+    <div class="registration-container" style="margin-bottom: 180px;">
         <div class="text-center mb-4">
-            <img src="falcon.png" alt="Falcon Logo" class="img-fluid mb-2">
+            <img src="{% static 'img/falcon.png' %}" alt="Falcon Logo" class="img-fluid mb-2">
             <div class="fs-4">HSEQ Service Portal - Registration</div>
         </div>
-        <form method="POST">
+        <form method="POST" action="{% url 'app:register' %}">
             {% csrf_token %}
-            <div class="d-flex gap-5 flex-wrap" style="padding-left: 40px; width: 70rem; ">
-            <!-- Username Field -->
-                <div class="input-box d-flex flex-column align-items-start " style="background-color: #89d05a;">
-                    <label class="label" for="username" style="margin-bottom: 5px;">Username</label>
-                    {{form.username}}
+            <div class="d-flex flex-column gap-3 justify-content-center align-items-center" style="padding-left: 40px; width: 70rem;">
+                <div class="input-box d-flex flex-column align-items-center" style="text-decoration: None;">
+                    <!-- Displaying messages -->
+                    {% for message in messages %}
+                        <p id="messages">{{ message }}</p>
+                    {% endfor %}
+
+                    <!-- Form Errors -->
+                    <div>{{ form.errors }}</div>
                 </div>
-                <!-- Email Field -->
-                <div class="input-box d-flex flex-column align-items-start" style="background-color: #89d05a;">
-                    <label class="label" for="username" style="margin-bottom: 5px;">Email</label>
-                    {{form.email}}
+
+
+                <div class="input-box d-flex flex-column align-items-center" style="background-color: #89d05a; padding: 10px;">
+                    <label class="label" for="email" style="margin-bottom: 5px;">First Name</label>
+                    {{ form.first_name }}
                 </div>
-                <div class="input-box flex-column align-items-start" style="background-color: #89d05a;">
+
+                <div class="input-box d-flex flex-column align-items-center" style="background-color: #89d05a; padding: 10px;">
+                    <label class="label" for="email" style="margin-bottom: 5px;">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+
+                <!-- Select Group Field -->
+                <div class="input-box d-flex flex-column align-items-center" style="background-color: #89d05a; padding: 10px;">
                     <label class="label" for="group" style="margin-bottom: 5px;">Select Group</label>
-                    {{form.group_choices}}
+                    <!-- Bootstrap dropdown -->
+                    <div class="dropdown">
+                        {{ form.group_choices }}
+                        <i class="fas fa-chevron-down" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%);"></i>
+                    </div>
                 </div>
-                
-            <!-- Password Field -->
-                <div class="input-box d-flex flex-column align-items-start" style="background-color: #ffcd69;">
+
+                <!-- Select Location Field -->
+                <div class="input-box d-flex flex-column align-items-center" style="background-color: #89d05a; padding: 10px;">
+                    <label class="label" for="location" style="margin-bottom: 5px;">Select Location</label>
+                    <!-- Bootstrap dropdown -->
+                    <div class="dropdown">
+                        {{ form.location_choices }}
+                        <i class="fas fa-chevron-down" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%);"></i>
+                    </div>
+                </div>
+
+                <!-- Email Field -->
+                <div class="input-box d-flex flex-column align-items-center" style="background-color: #89d05a; padding: 10px;">
+                    <label class="label" for="email" style="margin-bottom: 5px;">Email</label>
+                    {{ form.email }}
+                </div>
+
+
+                 <!-- Username Field -->
+                 <div class="input-box d-flex flex-column align-items-center" style="background-color: #89d05a; padding: 10px;">
+                    <label class="label" for="username" style="margin-bottom: 5px;">Username</label>
+                    {{ form.username }}
+                </div>
+
+                <!-- Password Field -->
+                <div class="input-box d-flex flex-column align-items-center" style="background-color: #ffcd69; padding: 10px;">
                     <label class="label" for="password1" style="margin-bottom: 5px;">Password</label>
-                    {{form.password1}}
+                    {{ form.password1 }}
                 </div>
-            <!-- Confirm Password Field -->
-                <div class="input-box d-flex flex-column align-items-start" style="background-color: #ffcd69;">
+
+                <!-- Confirm Password Field -->
+                <div class="input-box d-flex flex-column align-items-center" style="background-color: #ffcd69; padding: 10px;">
                     <label class="label" for="password2" style="margin-bottom: 5px;">Confirm Password</label>
-                    {{form.password2}}
+                    {{ form.password2 }}
                 </div>
-                
-                <div class="bg-info  input-box d-flex align-items-center justify-content-center" style="background-color: #69d0ff;">
+                <div>
+                    <input type="checkbox" class="form-check-input mr-2" required /> I agree to the Terms and Conditions
+                </div>
+
+                <!-- Submit Button -->
+                <div class="bg-info input-box d-flex align-items-center justify-content-center" style="background-color: #69d0ff; padding: 10px;">
                     <button class="btn text-light text-decoration-none border-0 bg-transparent">
                         Register <i class="fas fa-user-plus"></i>
                     </button>
                 </div>
+                <div class="d-flex justify-content-between w-100 mt-4 px-4 small" >
+                    <a href="{% url 'app:login' %}" class="link">Already have an account? Login</a>
+                </div>
             </div>
-            {% for message in messages %}
-                    <p id="messages">{{message}}</p>
-            {% endfor %}
-            <div>{{form.errors}}</div>
+
         </form>
-        <div class="d-flex justify-content-between w-100 mt-4 px-4 small">
-            <div>
-                <input type="checkbox" class="form-check-input mr-2" /> I agree to the Terms and Conditions
-            </div>
-            <a href="{% url 'login' %}" class="link">Already have an account? Login</a>
-        </div>
     </div>
 </body>
 </html>

@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Group
-from app.models import PTWForm, NHISForm
+from app.models import PTWForm, NHISForm, Notification
 
 def user_groups(request):
     # Ensure the user is authenticated before querying the database
@@ -77,4 +77,35 @@ def user_groups(request):
         'pending_nhis': pending_nhis,
         'pending_ptw_manager': pending_ptw_manager,
         'pending_nhis_manager': pending_nhis_manager,
+    }
+
+def notification_count(request):
+    """
+    Context processor to add unread notification count to all templates
+    """
+    if request.user.is_authenticated:
+        try:
+            unread_notifications_count = Notification.objects.filter(
+                recipient=request.user,
+                is_read=False
+            ).count()
+
+            recent_notifications = Notification.objects.filter(
+                recipient=request.user
+            ).order_by('-created_at')[:5]
+
+            return {
+                'unread_notifications_count': unread_notifications_count,
+                'recent_notifications': recent_notifications,
+            }
+        except Exception as e:
+            # If Notification model doesn't exist yet (e.g., before migrations)
+            print(f"Error in notification_count context processor: {e}")
+            return {
+                'unread_notifications_count': 0,
+                'recent_notifications': [],
+            }
+    return {
+        'unread_notifications_count': 0,
+        'recent_notifications': [],
     }

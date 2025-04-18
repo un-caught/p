@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>NHIS Form Update</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #0056b3;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            background-color: #0056b3;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .info-table th, .info-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .info-table th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>NHIS Form Update</h2>
+    </div>
+    <div class="content">
+        <p>There has been an update to NHIS Form {{ form_number }}.</p>
+        
+        <table class="info-table">
+            <tr>
+                <th>Form Number</th>
+                <td>{{ form_number }}</td>
+            </tr>
+            <tr>
+                <th>Submitted By</th>
+                <td>{{ submitter }}</td>
+            </tr>
+            <tr>
+                <th>Location</th>
+                <td>{{ location }}</td>
+            </tr>
+            <tr>
+                <th>Date</th>
+                <td>{{ date }}</td>
+            </tr>
+        </table>
+        
+        <p>Please log in to the system to view the complete details.</p>
+        
+        <a href="{{ site_url }}/nhis/{{ form.id }}/" class="button">View Form</a>
+    </div>
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; {{ current_year }} SAAF. All rights reserved.</p>
+    </div>
+</body>
+</html>

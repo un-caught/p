@@ -1,35 +1,27 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django import forms
-from .models import PTWForm, SafetyPrecaution, WorkLocationIsolation, PersonalSafety, NHISForm, Hazards, Member
+from .models import PTWForm, SafetyPrecaution, WorkLocationIsolation, PersonalSafety, NHISForm, Hazards, Member, NHISComment, PTWComment, LOCATION_CHOICES
 
 from django.forms.widgets import ClearableFileInput
 
-
-class ProfileEditForm(forms.ModelForm):
-    class Meta:
-        model = Member
-        fields = ['email', 'phone', 'address', 'profile_picture']
-
-class MultiFileInput(ClearableFileInput):
-    allow_multiple_selected = True
-
-    def __init__(self, attrs=None):
-        super().__init__(attrs)
-        if attrs is None:
-            attrs = {}
-        attrs.update({'multiple': 'multiple'})
-        self.attrs = attrs
 
 
 class CreateUserForm(UserCreationForm):
     group_choices = forms.ChoiceField(
         choices=[('staff', 'Staff'), ('vendor', 'Vendor Supervisor')],
-        widget=forms.Select(attrs={'class': 'form-control'})
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
+
+    location_choices = forms.ChoiceField(
+        choices=LOCATION_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label='Location'
+    )
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2']
+        fields = ['username', 'email', 'password1', 'password2', 'first_name','last_name']
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -37,29 +29,24 @@ class CreateUserForm(UserCreationForm):
             user.save()
         return user
 
-        
+
 
 class PTWSubmissionForm(forms.ModelForm):
     class Meta:
         model = PTWForm
         fields = ['location', 'work_description', 'equipment_tools_materials', 'risk_assessment_done','attachment','project_attachment',
-                  'start_datetime', 'duration', 'days', 'workers_count', 'department','contractor','contractor_supervisor', 
+                  'start_datetime', 'duration', 'days', 'workers_count', 'department','contractor','contractor_supervisor',
                   'work_place', 'work_location_isolation', 'personal_safety', 'additional_precautions', 'supervisor_name',
                   'applicant_name', 'applicant_date', 'applicant_sign', 'facility_manager_name', 'facility_manager_date', 'facility_manager_sign', 'certificates_required',
                   'valid_from', 'valid_to', 'initials', 'contractor_name', 'contractor_date', 'contractor_sign', 'hseq_name', 'hseq_date', 'hseq_sign', 'manager_name', 'manager_date', 'manager_sign']
 
 
     #Work Details
-    location = forms.ChoiceField(choices=[
-        ('HQ_Lekki', 'HQ - Lekki'),
-        ('CGS_Ikorodu', 'CGS - Ikorodu'),
-        ('LNG_PH', 'LNG - PH'),
-        ('LFZ_Ibeju', 'LFZ - Ibeju'),
-    ], widget=forms.Select(attrs={'class': 'form-select'}))
+    location = forms.ChoiceField(choices=LOCATION_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}))
     work_description = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}))
     equipment_tools_materials = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}))
     risk_assessment_done = forms.ChoiceField(choices=[('yes', 'Yes'), ('no', 'No')], widget=forms.Select(attrs={'class': 'form-select'}))
-    # attachment = forms.FileField(widget=forms.ClearableFileInput(attrs={'class': 'form-control'}), required=True)
+    attachment = forms.FileField(widget=forms.ClearableFileInput(attrs={'class': 'form-control'}), required=False)
 
     #Work Duration and Personnel
     start_datetime = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}))
@@ -102,10 +89,10 @@ class PTWSubmissionForm(forms.ModelForm):
     facility_manager_date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}))
     facility_manager_sign = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
     certificates_required = forms.ChoiceField(choices=[
-        ('CERTIFICATE_FOR_EXCAVATION_WORK', 'CERTIFICATE FOR EXCAVATION WORK'), 
-        ('CERTIFICATE_FOR_HOT_WORK', 'CERTIFICATE FOR HOT WORK'), 
-        ('CERTIFICATE_FOR_ELECTRICAL_WORK', 'CERTIFICATE FOR ELECTRICAL WORK'), 
-        ('GAS_TEST_FORM', 'GAS TEST FORM'), 
+        ('CERTIFICATE_FOR_EXCAVATION_WORK', 'CERTIFICATE FOR EXCAVATION WORK'),
+        ('CERTIFICATE_FOR_HOT_WORK', 'CERTIFICATE FOR HOT WORK'),
+        ('CERTIFICATE_FOR_ELECTRICAL_WORK', 'CERTIFICATE FOR ELECTRICAL WORK'),
+        ('GAS_TEST_FORM', 'GAS TEST FORM'),
         ('CERTIFICATE_FOR_CONFINED_SPACES', 'CERTIFICATE FOR CONFINED SPACES'),
         ('NOT_APPLICABLE', 'NOT APPLICABLE'),
         ], widget=forms.Select(attrs={'class': 'form-select'}))
@@ -119,7 +106,7 @@ class PTWSubmissionForm(forms.ModelForm):
     contractor_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
     contractor_date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}))
     contractor_sign = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    # project_attachment = forms.FileField(widget=forms.ClearableFileInput(attrs={'class': 'form-control'}), required=True)
+    project_attachment = forms.FileField(widget=forms.ClearableFileInput(attrs={'class': 'form-control'}), required=False)
 
     #HSEQ
     hseq_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}), required=False)
@@ -135,18 +122,13 @@ class PTWSubmissionForm(forms.ModelForm):
 class NHISSubmissionForm(forms.ModelForm):
     class Meta:
         model = NHISForm
-        fields = ['location', 'date', 'hazard', 'risk_type', 'ram_rating', 'observation', 
+        fields = ['location', 'date', 'hazard', 'risk_type', 'ram_rating', 'observation',
         'action_taken', 'preventive_action', 'responsible_party', 'target_date', 'observed_by', 'dept', 'observed_date']
 
-    
+
 
     #General Information
-    location = forms.ChoiceField(choices=[
-        ('HQ_Lekki', 'HQ - Lekki'),
-        ('CGS_Ikorodu', 'CGS - Ikorodu'),
-        ('LNG_PH', 'LNG - PH'),
-        ('LFZ_Ibeju', 'LFZ - Ibeju'),
-    ], widget=forms.Select(attrs={'class': 'form-select'}))
+    location = forms.ChoiceField(choices=LOCATION_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}))
     date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}))
 
     #Hazard Identification
@@ -197,3 +179,35 @@ class NHISSubmissionForm(forms.ModelForm):
         ('TS', 'TS'),
     ], widget=forms.Select(attrs={'class': 'form-select'}))
     observed_date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}))
+
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = NHISComment
+        fields = ['comment']
+        widgets = {
+            'comment': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Add your comment here...'}),
+        }
+
+
+class RejectForm(forms.Form):
+    rejection_reason = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Please provide a reason for rejection'}),
+        required=True
+    )
+
+
+class PTWCommentForm(forms.ModelForm):
+    class Meta:
+        model = PTWComment
+        fields = ['comment']
+        widgets = {
+            'comment': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Add your comment here...'}),
+        }
+
+
+class PTWRejectForm(forms.Form):
+    rejection_reason = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Please provide a reason for rejection'}),
+        required=True
+    )

@@ -1,0 +1,44 @@
+{% load static %}
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-bell me-2"></i> Recent Notifications
+            {% if request.unread_notifications_count > 0 %}
+                <span class="badge bg-danger">{{ request.unread_notifications_count }}</span>
+            {% endif %}
+        </h5>
+        <a href="{% url 'app:notifications' %}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="card-body">
+        {% if request.recent_notifications %}
+            <div class="list-group">
+                {% for notification in request.recent_notifications %}
+                    <a href="{% if notification.nhis_form %}{% url 'app:nhis_detail' notification.nhis_form.id %}{% else %}#{% endif %}" class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-light fw-bold{% endif %}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                {% if notification.notification_type == 'new_form' %}
+                                    <i class="fas fa-file-alt text-info me-1"></i>
+                                {% elif notification.notification_type == 'approved' %}
+                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                {% elif notification.notification_type == 'rejected' %}
+                                    <i class="fas fa-times-circle text-danger me-1"></i>
+                                {% elif notification.notification_type == 'comment' %}
+                                    <i class="fas fa-comment text-warning me-1"></i>
+                                {% endif %}
+                                {{ notification.sender.get_full_name }}
+                            </h6>
+                            <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                        </div>
+                        <p class="mb-1">{{ notification.message|truncatechars:100 }}</p>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                <p class="mb-0">No notifications to display.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>

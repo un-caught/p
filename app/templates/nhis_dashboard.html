@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}NHIS Dashboard{% endblock title %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Welcome, {{ request.user.get_full_name }}</h5>
+                </div>
+                <div class="card-body">
+                    <p>Welcome to your NHIS dashboard. Here you can see an overview of your forms and notifications.</p>
+
+                    {% if request.unread_notifications_count > 0 or request.pending_forms %}
+                        <div class="alert alert-warning animate__animated animate__fadeIn" role="alert">
+                            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Action Required!</h5>
+                            <hr>
+                            <p class="mb-0">
+                                {% if request.unread_notifications_count > 0 %}
+                                    You have <strong>{{ request.unread_notifications_count }}</strong> unread notification{{ request.unread_notifications_count|pluralize }}.
+                                {% endif %}
+
+                                {% if request.pending_forms %}
+                                    {% if request.unread_notifications_count > 0 %}<br>{% endif %}
+                                    You have <strong>{{ request.pending_forms|length }}</strong> form{{ request.pending_forms|length|pluralize }} requiring your attention.
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Pending Forms</h6>
+                                            <h2 class="mb-0">{{ request.pending_forms|length|default:"0" }}</h2>
+                                        </div>
+                                        <i class="fas fa-clipboard-list fa-3x opacity-50"></i>
+                                    </div>
+                                </div>
+                                <div class="card-footer d-flex align-items-center justify-content-between">
+                                    <a class="small text-white stretched-link" href="{% url 'app:nhis_list' %}">View Details</a>
+                                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-white mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Notifications</h6>
+                                            <h2 class="mb-0">{{ request.unread_notifications_count }}</h2>
+                                        </div>
+                                        <i class="fas fa-bell fa-3x opacity-50"></i>
+                                    </div>
+                                </div>
+                                <div class="card-footer d-flex align-items-center justify-content-between">
+                                    <a class="small text-white stretched-link" href="{% url 'app:notifications' %}">View Details</a>
+                                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Create Form</h6>
+                                            <p class="mb-0">Submit a new form</p>
+                                        </div>
+                                        <i class="fas fa-plus-circle fa-3x opacity-50"></i>
+                                    </div>
+                                </div>
+                                <div class="card-footer d-flex align-items-center justify-content-between">
+                                    <a class="small text-white stretched-link" href="{% url 'app:create_nhis' %}">Create New</a>
+                                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Include the NHIS Pending Widget -->
+            {% include 'dashboard_widgets/nhis_pending_widget.html' %}
+        </div>
+
+        <div class="col-md-4">
+            <!-- Include the Notifications Widget -->
+            {% include 'dashboard_widgets/notifications_widget.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}

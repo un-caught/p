@@ -3,49 +3,41 @@
 
 {% block content %}
 <div class="row pt-3">
-    <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
+    {% if is_vendor %}
+    <div class="col-md-6" data-aos="fade-up" data-aos-delay="100">
         <div class="card" style="background: linear-gradient(to right, #ffc107,rgb(155, 117, 3)); color: white;">
             <div class="card-body">
-                <h5 class="card-title">Pending PTW</h5>
+                <h5 class="card-title"><i class="fas fa-clock"></i> Pending PTW</h5>
                 <p class="card-text">{{ pend_count }}</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
+    <div class="col-md-6" data-aos="fade-up" data-aos-delay="200">
         <div class="card" style="background: linear-gradient(to right, #28a745,rgb(10, 100, 29)); color: white;">
             <div class="card-body">
-                <h5 class="card-title">Approved PTW</h5>
+                <h5 class="card-title"><i class="fas fa-check-circle"></i> Approved PTW</h5>
                 <p class="card-text">{{ approved_count }}</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
+    {% else %}
+    <div class="col-md-6" data-aos="fade-up" data-aos-delay="300">
         <div class="card" style="background: linear-gradient(to right, #6f42c1,rgb(51, 17, 116)); color: white;">
             <div class="card-body">
-                <h5 class="card-title">Open NHIR</h5>
+                <h5 class="card-title"><i class="fas fa-folder-open"></i> Open NHIR</h5>
                 <p class="card-text">{{ open_count }}</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
+    <div class="col-md-6" data-aos="fade-up" data-aos-delay="400">
         <div class="card" style="background: linear-gradient(to right, #007bff,rgb(16, 62, 112)); color: white;">
             <div class="card-body">
-                <h5 class="card-title">Closed NHIR</h5>
+                <h5 class="card-title"><i class="fas fa-folder"></i> Closed NHIR</h5>
                 <p class="card-text">{{ closed_count }}</p>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Recent Activities -->
-<div class="my-4" data-aos="fade-up" data-aos-delay="500">
-    <h3>Recent Activities</h3>
-    <ul class="list-group">
-        <li class="list-group-item">User John Doe logged in.</li>
-        <li class="list-group-item">New signup from Jane Smith.</li>
-        <li class="list-group-item">System update completed.</li>
-        <li class="list-group-item">User David signed out.</li>
-    </ul>
+    {% endif %}
 </div>
 
 </div>

@@ -1,26 +1,84 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erf - {% block title %}{% endblock title %}</title>
-    
+    <title>FCL - {% block title %}{% endblock title %}</title>
+    <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
+
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Font Awesome CDN for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
     <!-- AOS (Animate On Scroll) Library -->
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
 
+    <!-- Animate.css for animations -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {% block extra_head %}{% endblock %}
 
     <!-- Custom Styles -->
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f7fc;
+        }
+
+        /* Notification Styles */
+        .notification-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            transform: translate(50%, -50%);
+            border-radius: 50%;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+
+        .notification-dropdown {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        .notification-dropdown .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-dropdown .dropdown-item.bg-light {
+            border-left: 3px solid #dc3545;
+        }
+
+        /* Toast notification styles */
+        .toast {
+            min-width: 350px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            border: none;
+        }
+
+        .toast:hover {
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+
+        .toast .toast-header {
+            padding: 0.75rem 1rem;
+        }
+
+        .toast .toast-body {
+            padding: 1rem;
+            font-weight: 500;
         }
         .sidebar {
             background-color: #005d55;
@@ -117,33 +175,35 @@
         <div class="text-center text-white mb-4">
             <h3>Hello, {{request.user.first_name}}</h3>
         </div>
-        {% if is_staff or is_vendor %}
-            <a href="{% url 'client' %}" ><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a href="{% url 'create_form' %}"><i class="fas fa-form"></i> Create PTW Form</a>
-            <a href="{% url 'create_nhis' %}"><i class="fas fa-form"></i> Create NHIR Form</a>
-            <a href="{% url 'form_list' %}"><i class="fas fa-form"></i>PTW Forms</a>
-            <a href="{% url 'nhis_list' %}"><i class="fas fa-form"></i>NHIR Forms</a>
-            <a href="#"><i class="fas fa-cogs"></i> Settings</a>
-            <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        {% if is_staff %}
+            <a href="{% url 'app:client' %}" ><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{% url 'app:create_nhis' %}"><i class="fas fa-plus-circle"></i> Create NHIR Form</a>
+            <a href="{% url 'app:nhis_list' %}"><i class="fas fa-list-alt"></i> NHIR Forms</a>
+            <a href="{% url 'app:dashboard' %}"><i class="fas fa-sign-out-alt"></i> Back To Home</a>
+
+        {% elif is_vendor %}
+        <a href="{% url 'app:client' %}" ><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="{% url 'app:create_form' %}"><i class="fas fa-plus-circle"></i> Create PTW Form</a>
+        <a href="{% url 'app:form_list' %}"><i class="fas fa-list-alt"></i> PTW Forms</a>
+        <a href="{% url 'app:dashboard' %}"><i class="fas fa-sign-out-alt"></i> Back To Home</a>
 
         {% else %}
             {% if is_supervisor %}
-            <a href="{% url 'supervisor' %}" ><i class="fas fa-tachometer-alt"></i> Dashboard</a>            
+            <a href="{% url 'app:supervisor' %}" ><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             {% else %}
-            <a href="{% url 'manager' %}" ><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{% url 'app:manager' %}" ><i class="fas fa-tachometer-alt"></i> Dashboard</a>
             {% endif %}
-            <a href="{% url 'form_list' %}"><i class="fas fa-form"></i>PTW Forms</a>
-            <a href="{% url 'nhis_list' %}"><i class="fas fa-form"></i>NHIR Forms</a>
-            <a href="{% url 'form_report' %}"><i class="fas fa-form"></i>Report</a>
-            <a href="#"><i class="fas fa-cogs"></i> Settings</a>
-            <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            <a href="{% url 'app:form_list' %}"><i class="fas fa-list-alt"></i> PTW Forms</a>
+            <a href="{% url 'app:nhis_list' %}"><i class="fas fa-list-alt"></i> NHIR Forms</a>
+            <a href="{% url 'app:form_report' %}"><i class="fas fa-file-alt"></i> Report</a>
+            <a href="{% url 'app:dashboard' %}"><i class="fas fa-sign-out-alt"></i> Back To Home</a>
         {% endif %}
 
     </div>
 
     <!-- Main Content -->
     <div class="content" id="content">
-        
+
         <!-- Top Navbar -->
         <nav class="top-navbar navbar navbar-expand-lg d-flex justify-content-between mb-5">
             <!-- Button to toggle sidebar visibility -->
@@ -151,25 +211,89 @@
                 <i class="fas fa-bars"></i>
             </button>
             {% if is_staff or is_vendor  %}
-                <a class="navbar-brand" href="{% url 'client' %}">Dashboard</a>
+                <a class="navbar-brand" href="{% url 'app:client' %}">Dashboard</a>
             {% elif is_supervisor %}
-                <a class="navbar-brand" href="{% url 'supervisor' %}">Supervisor Dashboard</a>
+                <a class="navbar-brand" href="{% url 'app:supervisor' %}">Supervisor Dashboard</a>
             {% else %}
-                <a class="navbar-brand" href="{% url 'manager' %}">Manager Dashboard</a>
+                <a class="navbar-brand" href="{% url 'app:manager' %}">Manager Dashboard</a>
             {% endif %}
-            
 
-            
+
+
 
             <div class="d-flex align-items-center ms-auto">
                 <!-- User's Name -->
                 <span class="user-name me-3">Welcome, {{request.user.first_name}} {{request.user.last_name}}</span>
-                
-                <!-- Notifications and Profile Links -->
-                <a class="nav-link" href="#" style="padding-right: 0.3rem;"><i class="fas fa-bell"></i> Notifications</a>
-                <a class="nav-link" href="#"><i class="fas fa-user"></i> Profile</a>
+
+                <!-- Notifications Dropdown -->
+                <div class="dropdown me-3">
+                    <a class="nav-link position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-bell"></i>
+                        {% if request.unread_notifications_count > 0 %}
+                            <span class="notification-badge badge bg-danger animate__animated animate__heartBeat animate__infinite">
+                                {{ request.unread_notifications_count }}
+                                <span class="visually-hidden">unread notifications</span>
+                            </span>
+                            <!-- Add a glow effect around the bell icon -->
+                            <span class="position-absolute top-0 start-0 w-100 h-100 rounded-circle animate__animated animate__pulse animate__infinite" style="background-color: rgba(255, 0, 0, 0.2); z-index: -1;"></span>
+                        {% endif %}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationsDropdown" style="width: 350px; max-height: 400px; overflow-y: auto;">
+                        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                            <h6 class="dropdown-header m-0 p-0">Notifications</h6>
+                            <a href="{% url 'app:mark_all_notifications_read' %}" class="text-decoration-none small">Mark all as read</a>
+                        </div>
+                        {% if request.recent_notifications %}
+                            {% for notification in request.recent_notifications %}
+                                <a class="dropdown-item py-2 {% if not notification.is_read %}bg-light border-start border-4 border-danger{% endif %}" href="{% if notification.nhis_form %}{% url 'app:nhis_detail' notification.nhis_form.id %}{% elif notification.ptw_form %}{% url 'app:ptw_detail' notification.ptw_form.id %}{% else %}#{% endif %}">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            {% if notification.notification_type == 'new_form' %}
+                                                <i class="fas fa-file-alt text-info fa-lg"></i>
+                                            {% elif notification.notification_type == 'approved' %}
+                                                <i class="fas fa-check-circle text-success fa-lg"></i>
+                                            {% elif notification.notification_type == 'rejected' %}
+                                                <i class="fas fa-times-circle text-danger fa-lg"></i>
+                                            {% elif notification.notification_type == 'comment' %}
+                                                <i class="fas fa-comment text-warning fa-lg"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <p class="mb-0 {% if not notification.is_read %}fw-bold{% endif %}">{{ notification.message|truncatechars:100 }}</p>
+                                            <small class="{% if not notification.is_read %}text-danger{% else %}text-muted{% endif %}">{{ notification.created_at|timesince }} ago</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-center" href="{% url 'app:notifications' %}">View all notifications</a>
+                        {% else %}
+                            <div class="text-center py-3">
+                                <p class="text-muted mb-0">No notifications</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Profile Link -->
+                <a class="nav-link" href="#" style="padding-right: 0.3rem;">
+                    <i class="fas fa-user-circle"></i>
+                </a>
             </div>
         </nav>
+
+        <!-- Django Messages -->
+        <div class="container mt-3">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <!-- End Django Messages -->
 
         {% block content%}
 
@@ -177,14 +301,23 @@
 
 		{% endblock %}
 
-       
+
     <!-- Optional JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- AOS (Animate On Scroll) Library -->
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <!-- GetButton.io widget script removed from base, moved to specific template(s) -->
 
+
+
+    <!-- Notification Sound -->
+    <audio id="notificationSound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/1518/1518-preview.mp3" type="audio/mpeg">
+        <!-- Fallback notification sound -->
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         // Initialize AOS (Animate On Scroll)
@@ -213,6 +346,375 @@
                 } else {
                     content.style.marginLeft = '220px';  // Restore content margin when sidebar is shown
                 }
+            }
+        });
+
+        // Notification System
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if there are unread notifications
+            const unreadCount = {{ request.unread_notifications_count|default:0 }};
+
+            if (unreadCount > 0) {
+                // Play notification sound immediately
+                const notificationSound = document.getElementById('notificationSound');
+                notificationSound.currentTime = 0; // Reset to start
+                notificationSound.volume = 0.7; // Set volume to 70%
+
+                // Small delay to ensure the sound plays after the page has loaded
+                setTimeout(() => {
+                    notificationSound.play().catch(e => console.log('Audio play failed:', e));
+
+                    // Show a toast notification for unread notifications
+                    // Create toast container if it doesn't exist
+                    let toastContainer = document.querySelector('.toast-container');
+                    if (!toastContainer) {
+                        toastContainer = document.createElement('div');
+                        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                        toastContainer.style.zIndex = '1080';
+                        document.body.appendChild(toastContainer);
+                    }
+
+                    // Create toast element
+                    const toast = document.createElement('div');
+                    toast.className = 'toast show animate__animated animate__fadeInDown';
+                    toast.setAttribute('role', 'alert');
+                    toast.setAttribute('aria-live', 'assertive');
+                    toast.setAttribute('aria-atomic', 'true');
+
+                    // Create toast content
+                    toast.innerHTML = `
+                        <div class="toast-header bg-danger text-white">
+                            <i class="fas fa-bell me-2"></i>
+                            <strong class="me-auto">Unread Notifications</strong>
+                            <small>Just now</small>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            You have <strong>${unreadCount}</strong> unread notification${unreadCount > 1 ? 's' : ''}. Click to view.
+                        </div>
+                    `;
+
+                    // Add click handler to navigate to notifications
+                    toast.addEventListener('click', function(e) {
+                        if (!e.target.classList.contains('btn-close')) {
+                            window.location.href = '{% url "app:notifications" %}';
+                        }
+                    });
+
+                    // Add the toast to the container
+                    toastContainer.appendChild(toast);
+
+                    // Auto-hide the toast after 5 seconds
+                    setTimeout(() => {
+                        toast.classList.replace('animate__fadeInDown', 'animate__fadeOutUp');
+                        setTimeout(() => {
+                            if (toastContainer.contains(toast)) {
+                                toastContainer.removeChild(toast);
+                            }
+                        }, 1000);
+                    }, 5000);
+                }, 500);
+
+                // Browser notifications (if supported and permission granted)
+                if ('Notification' in window) {
+                    if (Notification.permission === 'granted') {
+                        showBrowserNotification(unreadCount);
+                    } else if (Notification.permission !== 'denied') {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === 'granted') {
+                                showBrowserNotification(unreadCount);
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Function to show browser notification
+            function showBrowserNotification(count) {
+                // Get the most recent notification from the dropdown
+                const recentNotificationElement = document.querySelector('.dropdown-item.bg-light');
+                let notificationMessage = `You have ${count} unread notification${count > 1 ? 's' : ''}`;
+
+                // If we can find a specific notification, use its message
+                if (recentNotificationElement) {
+                    const messageElement = recentNotificationElement.querySelector('p');
+                    if (messageElement && messageElement.textContent) {
+                        notificationMessage = messageElement.textContent;
+                    }
+                }
+
+                const notification = new Notification('NHIS Form Notification', {
+                    body: notificationMessage,
+                    icon: '{% static "img/favicon.png" %}',
+                    tag: 'nhis-notification',
+                    requireInteraction: true // Keep notification visible until user interacts with it
+                });
+
+                notification.onclick = function() {
+                    window.focus();
+
+                    // If we have a specific notification, go to its detail page
+                    if (recentNotificationElement && recentNotificationElement.href &&
+                        !recentNotificationElement.href.endsWith('#')) {
+                        window.location.href = recentNotificationElement.href;
+                    } else {
+                        window.location.href = '{% url "app:notifications" %}';
+                    }
+
+                    this.close();
+                };
+            }
+
+            // Auto-refresh notifications every 60 seconds
+            // Skip auto-refresh on form pages to prevent losing form data
+
+            // Check if this page has the no-auto-refresh meta tag
+            const noAutoRefreshMeta = document.querySelector('meta[name="no-auto-refresh"]');
+            const shouldAutoRefresh = !noAutoRefreshMeta;
+
+            // Only set up auto-refresh for pages that don't have the no-auto-refresh meta tag
+            if (shouldAutoRefresh) {
+                setInterval(function() {
+                    fetch('{% url "app:notifications" %}?format=json')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.unread_count > 0 && data.unread_count > unreadCount) {
+                                // Play sound for new notifications
+                                const notificationSound = document.getElementById('notificationSound');
+                                notificationSound.currentTime = 0; // Reset to start
+                                notificationSound.volume = 0.7; // Increase volume to 70%
+                                notificationSound.play().catch(e => console.log('Audio play failed:', e));
+
+                                // Show browser notification
+                                if ('Notification' in window && Notification.permission === 'granted') {
+                                    // Create notification with the first unread message
+                                    const unreadNotification = data.notifications.find(n => !n.is_read);
+                                    if (unreadNotification) {
+                                        const notification = new Notification('New Notification', {
+                                            body: unreadNotification.message,
+                                            icon: '{% static "img/favicon.png" %}',
+                                            tag: 'nhis-notification',
+                                            requireInteraction: true // Keep notification visible until user interacts with it
+                                        });
+
+                                        notification.onclick = function() {
+                                            window.focus();
+                                            if (unreadNotification.form_id) {
+                                                if (unreadNotification.form_type === 'nhis') {
+                                                    window.location.href = `/nhis/${unreadNotification.form_id}/`;
+                                                } else if (unreadNotification.form_type === 'ptw') {
+                                                    window.location.href = `/ptw/${unreadNotification.form_id}/`;
+                                                } else {
+                                                    window.location.href = '{% url "app:notifications" %}';
+                                                }
+                                            } else {
+                                                window.location.href = '{% url "app:notifications" %}';
+                                            }
+                                            this.close();
+                                        };
+                                    }
+                                }
+
+                                // Update notification badge without refreshing the page
+                                const badge = document.querySelector('.notification-badge');
+                                if (badge) {
+                                    badge.textContent = data.unread_count;
+                                    badge.classList.add('animate__animated', 'animate__bounce');
+                                    setTimeout(() => {
+                                        badge.classList.remove('animate__bounce');
+                                    }, 1000);
+                                } else {
+                                    // If badge doesn't exist yet, create it
+                                    const bellIcon = document.querySelector('#notificationsDropdown');
+                                    if (bellIcon) {
+                                        const newBadge = document.createElement('span');
+                                        newBadge.className = 'notification-badge badge bg-danger animate__animated animate__pulse animate__infinite';
+                                        newBadge.textContent = data.unread_count;
+                                        bellIcon.appendChild(newBadge);
+                                    }
+                                }
+
+                                // Show a toast notification
+                                const unreadNotification = data.notifications.find(n => !n.is_read);
+                                if (unreadNotification) {
+                                    // Create toast container if it doesn't exist
+                                    let toastContainer = document.querySelector('.toast-container');
+                                    if (!toastContainer) {
+                                        toastContainer = document.createElement('div');
+                                        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                                        toastContainer.style.zIndex = '1080';
+                                        document.body.appendChild(toastContainer);
+                                    }
+
+                                    // Create toast element
+                                    const toast = document.createElement('div');
+                                    toast.className = 'toast show animate__animated animate__fadeInRight';
+                                    toast.setAttribute('role', 'alert');
+                                    toast.setAttribute('aria-live', 'assertive');
+                                    toast.setAttribute('aria-atomic', 'true');
+
+                                    // Set toast header based on notification type
+                                    let headerBgClass = 'bg-primary';
+                                    let headerIcon = 'fa-bell';
+                                    let headerText = 'New Notification';
+
+                                    switch(unreadNotification.type) {
+                                        case 'new_form':
+                                            headerBgClass = 'bg-info';
+                                            headerIcon = 'fa-file-alt';
+                                            headerText = 'New Form Submitted';
+                                            break;
+                                        case 'approved':
+                                            headerBgClass = 'bg-success';
+                                            headerIcon = 'fa-check-circle';
+                                            headerText = 'Form Approved';
+                                            break;
+                                        case 'rejected':
+                                            headerBgClass = 'bg-danger';
+                                            headerIcon = 'fa-times-circle';
+                                            headerText = 'Form Rejected';
+                                            break;
+                                        case 'comment':
+                                            headerBgClass = 'bg-warning';
+                                            headerIcon = 'fa-comment';
+                                            headerText = 'New Comment';
+                                            break;
+                                    }
+
+                                    // Create toast content
+                                    toast.innerHTML = `
+                                        <div class="toast-header ${headerBgClass} text-white">
+                                            <i class="fas ${headerIcon} me-2"></i>
+                                            <strong class="me-auto">${headerText}</strong>
+                                            <small>Just now</small>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                                        </div>
+                                        <div class="toast-body">
+                                            ${unreadNotification.message}
+                                        </div>
+                                    `;
+
+                                    // Add click handler to navigate to the notification
+                                    toast.addEventListener('click', function() {
+                                        if (unreadNotification.form_id) {
+                                            if (unreadNotification.form_type === 'nhis') {
+                                                window.location.href = `/nhis/${unreadNotification.form_id}/`;
+                                            } else if (unreadNotification.form_type === 'ptw') {
+                                                window.location.href = `/ptw/${unreadNotification.form_id}/`;
+                                            } else {
+                                                window.location.href = '{% url "app:notifications" %}';
+                                            }
+                                        } else {
+                                            window.location.href = '{% url "app:notifications" %}';
+                                        }
+                                    });
+
+                                    // Add the toast to the container
+                                    toastContainer.appendChild(toast);
+
+                                    // Auto-hide the toast after 5 seconds
+                                    setTimeout(() => {
+                                        toast.classList.replace('animate__fadeInRight', 'animate__fadeOutRight');
+                                        setTimeout(() => {
+                                            toastContainer.removeChild(toast);
+                                        }, 1000);
+                                    }, 5000);
+                                }
+
+                                // Update the dropdown menu with new notifications
+                                const dropdownMenu = document.querySelector('.notification-dropdown');
+                                if (dropdownMenu && data.notifications && data.notifications.length > 0) {
+                                    // Get the container for notification items
+                                    const notificationList = dropdownMenu.querySelector('.dropdown-divider')?.parentNode;
+                                    if (notificationList) {
+                                        // Add new notifications at the top
+                                        data.notifications.forEach(notification => {
+                                            if (!notification.is_read) {
+                                                // Create notification item
+                                                const notificationItem = document.createElement('a');
+                                                notificationItem.className = 'dropdown-item py-2 bg-light';
+                                                notificationItem.href = notification.form_id ? `/nhis/${notification.form_id}/` : '#';
+
+                                                // Create content
+                                                const content = document.createElement('div');
+                                                content.className = 'd-flex align-items-center';
+
+                                                // Create icon container
+                                                const iconContainer = document.createElement('div');
+                                                iconContainer.className = 'flex-shrink-0';
+
+                                                // Create icon based on notification type
+                                                const icon = document.createElement('i');
+                                                switch(notification.type) {
+                                                    case 'new_form':
+                                                        icon.className = 'fas fa-file-alt text-info';
+                                                        break;
+                                                    case 'approved':
+                                                        icon.className = 'fas fa-check-circle text-success';
+                                                        break;
+                                                    case 'rejected':
+                                                        icon.className = 'fas fa-times-circle text-danger';
+                                                        break;
+                                                    case 'comment':
+                                                        icon.className = 'fas fa-comment text-warning';
+                                                        break;
+                                                    default:
+                                                        icon.className = 'fas fa-bell text-primary';
+                                                }
+
+                                                iconContainer.appendChild(icon);
+                                                content.appendChild(iconContainer);
+
+                                                // Create text container
+                                                const textContainer = document.createElement('div');
+                                                textContainer.className = 'flex-grow-1 ms-3';
+
+                                                // Create message
+                                                const message = document.createElement('p');
+                                                message.className = 'mb-0 small';
+                                                message.textContent = notification.message;
+
+                                                // Create timestamp
+                                                const timestamp = document.createElement('small');
+                                                timestamp.className = 'text-muted';
+
+                                                // Format the date
+                                                const date = new Date(notification.created_at);
+                                                const now = new Date();
+                                                const diffMs = now - date;
+                                                const diffMins = Math.round(diffMs / 60000);
+
+                                                if (diffMins < 1) {
+                                                    timestamp.textContent = 'Just now';
+                                                } else if (diffMins < 60) {
+                                                    timestamp.textContent = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+                                                } else if (diffMins < 1440) {
+                                                    const hours = Math.floor(diffMins / 60);
+                                                    timestamp.textContent = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                                                } else {
+                                                    const days = Math.floor(diffMins / 1440);
+                                                    timestamp.textContent = `${days} day${days > 1 ? 's' : ''} ago`;
+                                                }
+
+                                                textContainer.appendChild(message);
+                                                textContainer.appendChild(timestamp);
+                                                content.appendChild(textContainer);
+
+                                                notificationItem.appendChild(content);
+
+                                                // Insert at the top, after the header
+                                                const header = dropdownMenu.querySelector('.dropdown-header')?.parentNode?.parentNode;
+                                                if (header && header.nextSibling) {
+                                                    notificationList.insertBefore(notificationItem, header.nextSibling);
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        })
+                        .catch(error => console.error('Error fetching notifications:', error));
+                }, 60000); // Check every minute
             }
         });
     </script>

@@ -1,110 +1,158 @@
 {% extends 'base.html' %}
-{% block title %}NHIR List{% endblock title %}
+{% block title %}NHIS Forms{% endblock title %}
+{% load static %}
 
 {% block content %}
-<div class="container shadow-sm bg-white mt-6" style="border-radius: 0.375rem;">
-    <div class="card-body">
-        <h1 class="text-center mb-4 mt-2">Hazard Identificaions Forms (NHIR) Forms</h1>
-        {% if is_staff %}
-        <a href="{% url 'create_nhis' %}" class="btn btn-primary mb-3" >Create New NHIR Form</a>
-        {% endif %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Hazard Identification Forms (NHIS)</h5>
+                    {% if request.user.groups.all.0.name == 'staff' %}
+                        <a href="{% url 'app:create_nhis' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create New Form
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <!-- Search Form -->
+                    <form method="GET" action="{% url 'app:nhis_list' %}" class="row g-3 mb-4">
+                        <div class="col-md-2">
+                            <label for="form_number" class="form-label">Form Number</label>
+                            <input type="text" class="form-control" id="form_number" name="form_number" value="{{ form_number }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="location_search" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location_search" name="location_search" value="{{ location_search }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All</option>
+                                <option value="awaiting_supervisor" {% if status_search == 'awaiting_supervisor' %}selected{% endif %}>Awaiting Approval</option>
+                                <option value="approved" {% if status_search == 'approved' %}selected{% endif %}>Approved</option>
+                                <option value="rejected_by_supervisor" {% if status_search == 'rejected_by_supervisor' %}selected{% endif %}>Rejected</option>
+                                <!-- Legacy statuses kept for backward compatibility -->
+                                <option value="awaiting_manager" {% if status_search == 'awaiting_manager' %}selected{% endif %}>Legacy - Awaiting Manager</option>
+                                <option value="rejected_by_manager" {% if status_search == 'rejected_by_manager' %}selected{% endif %}>Legacy - Rejected by Manager</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="date_from" class="form-label">Date From</label>
+                            <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="date_to" class="form-label">Date To</label>
+                            <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="d-grid gap-2 w-100">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
 
-        <form method="get" class="mb-4">
-            <div class="input-group">
-                <input type="text" class="form-control" name="location_search" placeholder="Search by Location" value="{{ request.GET.location_search }}">
-                <button class="btn btn-secondary" type="submit">Search</button>
+                    <!-- Results Table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Form Number</th>
+                                    {% if request.user.groups.all.0.name != 'staff' %}
+                                        <th>Submitted By</th>
+                                    {% endif %}
+                                    <th>Location</th>
+                                    <th>Date Submitted</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if submissions %}
+                                    {% for submission in submissions %}
+                                        <tr>
+                                            <td>{{ submission.form_number }}</td>
+                                            {% if request.user.groups.all.0.name != 'staff' %}
+                                                <td>{{ submission.user.get_full_name }}</td>
+                                            {% endif %}
+                                            <td>{{ submission.location }}</td>
+                                            <td>{{ submission.date_submitted|date:"M d, Y H:i" }}</td>
+                                            <td>
+                                                {% if submission.status == 'awaiting_supervisor' %}
+                                                    <span class="badge bg-warning">Awaiting Approval</span>
+                                                {% elif submission.status == 'approved' %}
+                                                    <span class="badge bg-success">Approved</span>
+                                                {% elif submission.status == 'rejected_by_supervisor' %}
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                {% elif submission.status == 'awaiting_manager' %}
+                                                    <span class="badge bg-info">Legacy - Awaiting Manager</span>
+                                                {% elif submission.status == 'rejected_by_manager' %}
+                                                    <span class="badge bg-danger">Legacy - Rejected by Manager</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <a href="{% url 'app:nhis_detail' submission.id %}" class="btn btn-sm btn-info">
+                                                        <i class="fas fa-eye"></i> View
+                                                    </a>
+
+                                                    {% if request.user.groups.all.0.name == 'staff' %}
+                                                        {% if submission.status == 'rejected_by_supervisor' or submission.status == 'rejected_by_manager' %}
+                                                            <a href="{% url 'app:edit_nhis_form' submission.id %}" class="btn btn-sm btn-warning">
+                                                                <i class="fas fa-edit"></i> Edit
+                                                            </a>
+                                                        {% endif %}
+
+                                                        {% if submission.status == 'awaiting_supervisor' %}
+                                                            <a href="{% url 'app:delete_nhis_form' submission.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this form?');">
+                                                                <i class="fas fa-trash"></i> Delete
+                                                            </a>
+                                                        {% endif %}
+                                                    {% endif %}
+
+                                                    {% if request.user.groups.all.0.name == 'supervisor' and submission.status == 'awaiting_supervisor' %}
+                                                        <a href="{% url 'app:approve_nhis_supervisor' submission.id %}" class="btn btn-sm btn-success">
+                                                            <i class="fas fa-check"></i> Approve
+                                                        </a>
+                                                        <a href="{% url 'app:reject_nhis_supervisor' submission.id %}" class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-times"></i> Reject
+                                                        </a>
+                                                    {% endif %}
+
+                                                    {% if request.user.groups.all.0.name == 'manager' and submission.status == 'awaiting_manager' %}
+                                                        <a href="{% url 'app:approve_nhis_manager' submission.id %}" class="btn btn-sm btn-success">
+                                                            <i class="fas fa-check"></i> Approve
+                                                        </a>
+                                                        <a href="{% url 'app:reject_nhis_manager' submission.id %}" class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-times"></i> Reject
+                                                        </a>
+                                                    {% endif %}
+
+                                                    {% if submission.status == 'approved' %}
+                                                        <a href="{% url 'app:nhis_pdf' submission.id %}" class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-file-pdf"></i> PDF
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="{% if request.user.groups.all.0.name != 'staff' %}6{% else %}5{% endif %}" class="text-center">
+                                            No forms found matching your criteria.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </form>
-
-    <div class="table-responsive">
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    {% if is_supervisor %}
-                    <th scope="col">Submitted By</th>
-                    {% endif %}
-                    <th scope="col">Location</th>
-                    <th scope="col">Date Submitted</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Actions</th>
-                    {% if submission.status == 'awaiting_supervisor' %}
-                    <th scope="col">Approval</th>
-                    {% endif %}
-                </tr>
-            </thead>
-            <tbody>
-                {% if submissions %}
-                    {% for submission in submissions %}
-                    <tr>
-                        {% if is_supervisor %}
-                        <td>{{ submission.user }}</td>
-                        {% endif %}
-                        
-                        <td>{{ submission.location }}</td>
-                        <td>{{ submission.date_submitted }}</td>
-
-                        <!-- Status Badge -->
-                        <td>
-                            <span class="badge rounded-pill 
-                                {% if submission.status == 'awaiting_supervisor' %} bg-warning
-                                {% elif submission.status == 'awaiting_manager' %} bg-info
-                                {% elif submission.status == 'closed' %} bg-success
-                                {% elif submission.status == 'denied' %} bg-secondary
-                                {% endif %}">
-                                {% if submission.status == 'awaiting_supervisor' %} Awaiting Supervisor Approval
-                                {% elif submission.status == 'awaiting_manager' %}  Awaiting Manager Approval
-                                {% elif submission.status == 'closed' %} Closed Complain
-                                {% elif submission.status == 'denied' %} Denied
-                                {% endif %}
-                            </span>
-                        </td>
-
-                        <td>
-                            {% if is_staff %}
-                                {% if submission.status == 'approved' %}
-                                    <a href="#" class="btn btn-sm btn-secondary mb-1">Print</a>
-                                    <br>
-                                {% elif submission.status == 'awaiting_supervisor' %}
-                                    <a href="{% url 'edit_nhis_form' submission.pk %}" class="btn btn-sm btn-secondary">Edit</a>
-                                {% endif %}
-                                <form action="{% url 'delete_nhis_form' submission.pk %}" method="post" style="display: inline;" class="pb-2">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                </form>
-                            {% elif is_supervisor or is_manager %}
-                                <a href="{% url 'view_nhis_form' submission.pk %}" class="btn btn-sm btn-info">View</a>
-                            {% endif %}
-                        </td>
-
-                        <!-- Role-Based Action Buttons for Approval -->
-                        <td>
-                            {% if is_supervisor %}
-                                {% if submission.status == 'awaiting_supervisor' %}
-                                <a href="{% url 'approve_nhis_supervisor' submission.pk %}" class="btn btn-sm btn-primary mb-1">Approve</a>
-                                <a href="{% url 'disapprove_nhis_supervisor' submission.pk %}" class="btn btn-sm btn-danger mb-1">Disapprove</a>
-                                {% endif %}
-                            {% elif is_manager %}
-                                {% if submission.status == 'awaiting_manager' %}
-                                <a href="{% url 'approve_nhis_manager' submission.pk %}" class="btn btn-sm btn-primary mb-1">Approve</a>
-                                <a href="{% url 'disapprove_nhis_manager' submission.pk %}" class="btn btn-sm btn-danger mb-1">Disapprove</a>
-                                {% endif %}
-                            {% comment %} {% else %}
-                                {% if submission.status == 'open' %}
-                                <a href="{% url 'approve_nhis_supervisor' submission.pk %}" class="btn btn-sm btn-primary mb-1">Approve Supervisor</a>
-                                {% elif submission.status == 'awaiting_supervisor' %}
-                                <a href="{% url 'approve_nhis_manager' submission.pk %}" class="btn btn-sm btn-primary mb-1">Approve Manager</a>
-                                {% endif %} {% endcomment %}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="7">No submissions found.</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
+        </div>
     </div>
 </div>
-{% endblock content %}
+{% endblock %}

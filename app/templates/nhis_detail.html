@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% block title %}NHIS Form Detail{% endblock title %}
+
+{% block extra_head %}
+<meta name="no-auto-refresh" content="true">
+{% endblock %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        NHIS Form {{ submission.form_number }}
+                        {% if submission.status == 'approved' %}
+                            <span class="badge bg-success">Approved</span>
+                        {% elif submission.status == 'awaiting_supervisor' %}
+                            <span class="badge bg-warning">Awaiting Supervisor</span>
+                        {% elif submission.status == 'rejected_by_supervisor' %}
+                            <span class="badge bg-danger">Rejected by Supervisor</span>
+                        {% elif submission.status == 'awaiting_manager' %}
+                            <span class="badge bg-info">Awaiting Approval (Legacy)</span>
+                        {% elif submission.status == 'rejected_by_manager' %}
+                            <span class="badge bg-danger">Rejected (Legacy)</span>
+                        {% endif %}
+                    </h5>
+                    <div>
+                        <a href="{% url 'app:nhis_pdf' submission.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-file-pdf"></i> Export PDF
+                        </a>
+                        {% if user == submission.user and submission.status in 'rejected_by_supervisor,rejected_by_manager' %}
+                            <a href="{% url 'app:edit_nhis_form' submission.id %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Submitted By:</strong> {{ submission.user.get_full_name }}</p>
+                            <p><strong>Date Submitted:</strong> {{ submission.date_submitted|date:"F d, Y H:i" }}</p>
+                            <p><strong>Location:</strong> {{ submission.location }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Form Number:</strong> {{ submission.form_number }}</p>
+                            <p><strong>Date:</strong> {{ submission.date|date:"F d, Y" }}</p>
+                            <p><strong>Status:</strong> {{ submission.get_status_display }}</p>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold">Hazard Identification</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Hazards:</strong></p>
+                            <ul>
+                                {% for hazard in submission.hazard.all %}
+                                    <li>{{ hazard.name }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Risk Type:</strong> {{ submission.get_risk_type_display }}</p>
+                            <p><strong>RAM Rating:</strong> {{ submission.get_ram_rating_display }}</p>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold">Observation</h6>
+                    <div class="mb-3">
+                        <p>{{ submission.observation }}</p>
+                    </div>
+
+                    <h6 class="fw-bold">Immediate Action Taken</h6>
+                    <div class="mb-3">
+                        <p>{{ submission.action_taken }}</p>
+                    </div>
+
+                    <h6 class="fw-bold">Preventive Action</h6>
+                    <div class="mb-3">
+                        <p>{{ submission.preventive_action }}</p>
+                    </div>
+
+                    <h6 class="fw-bold">Responsible Party and Target</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Responsible Party:</strong> {{ submission.get_responsible_party_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Target Date:</strong> {{ submission.target_date|date:"F d, Y" }}</p>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold">Observed By</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <p><strong>Name:</strong> {{ submission.observed_by }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Department:</strong> {{ submission.get_dept_display }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Date:</strong> {{ submission.observed_date|date:"F d, Y" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Approval tracking -->
+                    <h6 class="fw-bold mt-4">Approval Status</h6>
+                    <ul class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Submitted by {{ submission.user.get_full_name }}
+                            <span class="badge bg-success rounded-pill">
+                                <i class="fas fa-check"></i>
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Supervisor Approval
+                            {% if submission.supervisor_approved_by %}
+                                <span class="badge bg-success rounded-pill">
+                                    <i class="fas fa-check"></i> {{ submission.supervisor_approved_by.get_full_name }} ({{ submission.supervisor_approved_at|date:"d M Y" }})
+                                </span>
+                            {% elif submission.status == 'awaiting_supervisor' %}
+                                <span class="badge bg-warning rounded-pill">Pending</span>
+                            {% elif submission.status == 'rejected_by_supervisor' %}
+                                <span class="badge bg-danger rounded-pill">Rejected</span>
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill">N/A</span>
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Manager Approval
+                            {% if submission.manager_approved_by %}
+                                <span class="badge bg-success rounded-pill">
+                                    <i class="fas fa-check"></i> {{ submission.manager_approved_by.get_full_name }} ({{ submission.manager_approved_at|date:"d M Y" }})
+                                </span>
+                            {% elif submission.status == 'awaiting_manager' %}
+                                <span class="badge bg-warning rounded-pill">Pending</span>
+                            {% elif submission.status == 'rejected_by_manager' %}
+                                <span class="badge bg-danger rounded-pill">Rejected</span>
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill">N/A</span>
+                            {% endif %}
+                        </li>
+                    </ul>
+
+                    <!-- Rejection information if rejected -->
+                    {% if submission.status == 'rejected_by_supervisor' or submission.status == 'rejected_by_manager' %}
+                        <div class="alert alert-danger">
+                            <h6 class="fw-bold">Rejection Information</h6>
+                            <p><strong>Rejected By:</strong> {{ submission.rejected_by.get_full_name }}</p>
+                            <p><strong>Rejection Date:</strong> {{ submission.rejected_at|date:"F d, Y H:i" }}</p>
+                            <p><strong>Reason:</strong> {{ submission.rejection_reason }}</p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Approval stamp for approved forms -->
+                    {% if submission.status == 'approved' %}
+                        <div class="mt-4 text-center">
+                            <div class="approval-stamp">
+                                <div class="stamp-content">
+                                    <div class="stamp-title">APPROVED</div>
+                                    <div class="stamp-date">{{ submission.manager_approved_at|date:"d M Y" }}</div>
+                                    <div class="stamp-signature">{{ submission.manager_approved_by.get_full_name }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Action buttons for supervisors and managers -->
+            {% if user.groups.all.0.name == 'supervisor' and submission.status == 'awaiting_supervisor' %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">Supervisor Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'app:approve_nhis_supervisor' submission.id %}" class="btn btn-success">
+                                <i class="fas fa-check-circle"></i> Approve
+                            </a>
+                            <a href="{% url 'app:reject_nhis_supervisor' submission.id %}" class="btn btn-danger">
+                                <i class="fas fa-times-circle"></i> Reject
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Manager approval section removed as supervisor is now the final approver -->
+
+            <!-- Comments section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Comments</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'app:add_nhis_comment' submission.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Add a comment</label>
+                            <textarea name="comment" id="comment" rows="3" class="form-control" placeholder="Add your comment here..."></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-comment"></i> Post Comment
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <div class="comments-list">
+                        {% if submission.comments.all %}
+                            {% for comment in submission.comments.all %}
+                                <div class="comment mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>{{ comment.user.get_full_name }}</strong>
+                                        <small class="text-muted">{{ comment.created_at|date:"F d, Y H:i" }}</small>
+                                    </div>
+                                    <p class="mb-0">{{ comment.comment }}</p>
+                                    <hr>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-center text-muted">No comments yet</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .approval-stamp {
+        position: relative;
+        display: inline-block;
+        border: 2px solid #28a745;
+        border-radius: 50%;
+        width: 150px;
+        height: 150px;
+        transform: rotate(-15deg);
+        opacity: 0.8;
+    }
+
+    .stamp-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        width: 100%;
+    }
+
+    .stamp-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #28a745;
+    }
+
+    .stamp-date {
+        font-size: 14px;
+        color: #28a745;
+    }
+
+    .stamp-signature {
+        font-size: 12px;
+        font-style: italic;
+        color: #28a745;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>New NHIS Form Submission</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #0056b3;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            background-color: #0056b3;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .info-table th, .info-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .info-table th {
+            background-color: #f2f2f2;
+        }
+        .highlight {
+            background-color: #ffffd9;
+            padding: 10px;
+            border-left: 4px solid #ffd700;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>New NHIS Form Submission</h2>
+    </div>
+    <div class="content">
+        <p>A new NHIS form has been submitted and requires your attention.</p>
+        
+        <div class="highlight">
+            <p><strong>Form Number:</strong> {{ form_number }}</p>
+        </div>
+        
+        <table class="info-table">
+            <tr>
+                <th>Submitted By</th>
+                <td>{{ submitter }}</td>
+            </tr>
+            <tr>
+                <th>Location</th>
+                <td>{{ location }}</td>
+            </tr>
+            <tr>
+                <th>Date</th>
+                <td>{{ date }}</td>
+            </tr>
+            <tr>
+                <th>Observation</th>
+                <td>{{ observation }}</td>
+            </tr>
+        </table>
+        
+        <p>Please review this form at your earliest convenience.</p>
+        
+        <a href="{{ site_url }}/nhis/{{ form.id }}/" class="button">Review Form</a>
+    </div>
+    <div class="footer">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; {{ current_year }} SAAF. All rights reserved.</p>
+    </div>
+</body>
+</html>

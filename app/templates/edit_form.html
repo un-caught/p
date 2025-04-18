@@ -6,11 +6,12 @@
     <h2 class="my-4" data-aos="fade-up">Edit Form Submission</h2>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-    
+
         <h3>Section 1: Work Details</h3>
         <div class="mb-3">
             <label for="location" class="form-label">1. Location Of Work</label>
             {{ form.location }}
+            <small class="form-text text-muted">Note: You can only select your assigned location ({{ request.user.member.location }})</small>
         </div>
         <div class="mb-3">
             <label for="workDescription" class="form-label">2. Description Of Work</label>
@@ -59,7 +60,7 @@
             <label for="supervisor" class="form-label">11. Name Of Contractor Supervisor</label>
             {{ form.contractor_supervisor }}
         </div>
-        
+
         <!-- Section 3: Safety Precaution -->
         <h3>Section 3: Safety Precaution</h3>
         <div class="mb-3">
@@ -134,7 +135,7 @@
             <label for="{{ form.project_attachment.id_for_label }}" class="form-label">Attachment For Projects Work Done </label>
             {{ form.project_attachment }}
         </div>
-         
+
          <!-- Section 7: HSEQ -->
          <h3>Section 7: HSEQ</h3>
          <h4>Please leave the section empty if you are not in HSEQ Deptment</h4>
@@ -164,7 +165,7 @@
              {{ form.hseq_sign }}
          </div>
 
-         
+
          <!-- Section 8: Manager -->
          <h3>Section 8: Manager</h3>
          <h4>Please leave the section empty for the Manger</h4>

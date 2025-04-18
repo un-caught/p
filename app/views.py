@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import CreateUserForm, PTWSubmissionForm, NHISSubmissionForm, ProfileEditForm
+from .forms import CreateUserForm, PTWSubmissionForm, NHISSubmissionForm
 from django.contrib.auth.models import Group, User
 from django.contrib.auth import authenticate, login, logout
 from .models import Member, PTWForm, NHISForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .decorators import allowed_users
+from .decorators import allowed_users, unauthenticated_user
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.dateparse import parse_date
@@ -38,7 +38,21 @@ import seaborn as sns
 # Ensure we use the Agg backend for matplotlib (headless rendering)
 matplotlib.use('Agg')
 
+
+def custom_404(request, exception=None):
+    return render(request, '404.html', status=404)
+
+
+
+@unauthenticated_user
 def loginPage(request):
+    # Clear any existing messages that aren't login-related
+    storage = messages.get_messages(request)
+    for message in storage:
+        # Keep only messages with the 'login' tag or messages created in this view
+        if not getattr(message, 'login_message', False):
+            storage.used = True
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -47,90 +61,107 @@ def loginPage(request):
 
         if user is not None:
             login(request, user)
-            if user.groups.filter(name='manager').exists():
-                return redirect('manager')
-            elif user.groups.filter(name='supervisor').exists():
-                return redirect('supervisor')
-            elif user.groups.filter(name='staff').exists():
-                return redirect('client')
-            elif user.groups.filter(name='vendor').exists():
-                return redirect('client')
-            else:
-                messages.info(request, 'Username or Password is incorrect')
+            return redirect('app:dashboard')
 
         else:
-            messages.info(request, 'Username or Password is incorrect')
+            # Add a login_message attribute to identify this message
+            message = messages.info(request, 'Username or Password is incorrect')
+            message.login_message = True
     return render(request, 'login.html')
 
-@login_required(login_url='login')
+
+# @unauthenticated_user
+# def loginPage(request):
+#     if request.method == 'POST':
+#         username = request.POST.get('username')
+#         password = request.POST.get('password')
+
+#         user = authenticate(request, username=username, password=password)
+
+#         if user is not None:
+#             login(request, user)
+#             if user.groups.filter(name='manager').exists():
+#                 return redirect('manager')
+#             elif user.groups.filter(name='supervisor').exists():
+#                 return redirect('supervisor')
+#             elif user.groups.filter(name='staff').exists():
+#                 return redirect('client')
+#             elif user.groups.filter(name='vendor').exists():
+#                 return redirect('client')
+#             else:
+#                 messages.info(request, 'Username or Password is incorrect')
+
+#         else:
+#             messages.info(request, 'Username or Password is incorrect')
+#     return render(request, 'login.html')
+
+@login_required(login_url='app:login')
 def logoutUser(request):
     logout(request)
-    return redirect('login') 
+    return redirect('app:login')
 
 
-def registerPage(request):   
+@unauthenticated_user
+def registerPage(request):
     form = CreateUserForm()
-    
+
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
         if form.is_valid():
             user = form.save()
             username = form.cleaned_data.get('username')
 
+            # Get role group name
             group_name = form.cleaned_data.get('group_choices')
 
-            try:
-                group = Group.objects.get(name=group_name)
-            except Group.DoesNotExist:
-                messages.error(request, f"Group {group_name} does not exist.")
-                return redirect('register')
+            # Get location
+            location = form.cleaned_data.get('location_choices')
 
-            user.groups.add(group)
+            # Create or get role group
+            try:
+                role_group = Group.objects.get(name=group_name)
+            except Group.DoesNotExist:
+                message = messages.error(request, f"Group {group_name} does not exist.")
+                message.login_message = True
+                return redirect('app:register')
+
+            # Create or get location group
+            location_group_name = f"location_{location}"
+            location_group, created = Group.objects.get_or_create(name=location_group_name)
+
+            # Add user to both groups
+            user.groups.add(role_group)
+            user.groups.add(location_group)
+
+            # Create Member profile with location
             Member.objects.create(
                 user=user,
+                location=location
                 )
 
-            messages.success(request, f"Account was created for {username} and assigned to {group_name} group.")
+            message = messages.success(request, f"Account was created for {username}. You can now log in.")
+            message.login_message = True
 
-            return redirect('register')
+            return redirect('app:login')
 
     context = {'form':form}
     return render(request, 'register.html', context)
 
 
-
-# @login_required
-# def profile(request):
-#     # Retrieve the logged-in user's profile
-#     profile = Member.objects.get_or_create(user=request.user)[0]
-    
-#     # Pass the profile data to the template
-#     return render(request, 'profile.html', {'profile': profile})
+@login_required(login_url='app:login')
+def dashboard(request):
+    return render(request, 'dashboard.html')
 
 
-# @login_required
-# def edit_profile(request):
-#     profile = Member.objects.get(user=request.user)
-    
-#     if request.method == 'POST':
-#         form = ProfileEditForm(request.POST, request.FILES, instance=profile)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('profile')
-#     else:
-#         form = ProfileEditForm(instance=profile)
-    
-#     return render(request, 'edit_profile.html', {'form': form})
 
-
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['staff', 'vendor'])
 def clientDashboard(request):
     return render(request, 'client.html')
 
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['supervisor'])
 def supervisorDashboard(request):
     # Get the current year
@@ -141,7 +172,7 @@ def supervisorDashboard(request):
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ]
-    
+
     # Query PTW forms and group by month using 'date_submitted'
     ptw_monthly_stats = PTWForm.objects.filter(date_submitted__year=current_year) \
                                        .annotate(month=TruncMonth('date_submitted')) \
@@ -175,7 +206,7 @@ def supervisorDashboard(request):
 
     # Set Seaborn style
     sns.set_theme(style="whitegrid")  # You can experiment with different themes like "darkgrid", "ticks", etc.
-    
+
     # Create the combined bar chart for PTW and NHIS forms
     fig, ax = plt.subplots(figsize=(11, 6))  # Increase figure size for better visibility
     width = 0.35  # the width of the bars
@@ -217,7 +248,7 @@ def supervisorDashboard(request):
     })
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['manager'])
 def managerDashboard(request):
     # Get the current year
@@ -228,7 +259,7 @@ def managerDashboard(request):
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ]
-    
+
     # Define the statuses for PTW and NHIS forms
     ptw_statuses = ['awaiting_manager', 'disapproved', 'approved']
     nhis_statuses = ['awaiting_manager', 'closed', 'denied']
@@ -267,7 +298,7 @@ def managerDashboard(request):
 
     # Set Seaborn style
     sns.set_theme(style="whitegrid")  # You can experiment with different themes like "darkgrid", "ticks", etc.
-    
+
     # Create the combined bar chart for PTW and NHIS forms
     fig, ax = plt.subplots(figsize=(14, 8))  # Increased figure size for better visibility
     width = 0.35  # The width of the bars
@@ -316,26 +347,32 @@ def managerDashboard(request):
 
 
 def send_mail_to_user_and_supervisors(user_email, subject, message):
-    # Get the email addresses of users in the 'supervisor' group
-    supervisor_group = Group.objects.get(name='supervisor')
-    supervisor_emails = User.objects.filter(groups=supervisor_group).values_list('email', flat=True)
+    try:
+        # Get the email addresses of users in the 'supervisor' group
+        supervisor_group = Group.objects.get(name='supervisor')
+        supervisor_emails = User.objects.filter(groups=supervisor_group).values_list('email', flat=True)
 
-    # Combine the user_email and supervisor emails into a single recipient list
-    recipient_list = [user_email] + list(supervisor_emails)  # Only send to the user and supervisors
+        # Combine the user_email and supervisor emails into a single recipient list
+        recipient_list = [user_email] + list(supervisor_emails)  # Only send to the user and supervisors
 
-    # Send the email
-    send_mail(
-        subject,            # Subject of the email
-        message,            # Body of the email
-        settings.EMAIL_HOST_USER,  # From email (should be your configured email)
-        recipient_list,     # List of recipient emails
-        fail_silently=False  # If True, suppress exceptions (set to False for debugging)
-    )
+        # Send the email
+        send_mail(
+            subject,            # Subject of the email
+            message,            # Body of the email
+            settings.EMAIL_HOST_USER,  # From email (should be your configured email)
+            recipient_list,     # List of recipient emails
+            fail_silently=True  # Changed to True to prevent form submission errors
+        )
+        return True
+    except Exception as e:
+        # Log the error but don't stop the form submission
+        print(f"Email sending failed: {str(e)}")
+        return False
 
 
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['vendor'])
 def create_ptw_form(request):
     if request.method == 'POST':
@@ -367,9 +404,14 @@ def create_ptw_form(request):
             """
 
             # Send the email to the signed-in user and supervisors
-            send_mail_to_user_and_supervisors(submission.user.email, subject, message)
+            # Use try-except to handle email errors gracefully
+            try:
+                send_mail_to_user_and_supervisors(submission.user.email, subject, message)
+            except Exception as e:
+                # Log the error but don't stop the form submission
+                print(f"Email sending failed in create_ptw_form: {str(e)}")
 
-            return redirect('form_list')
+            return redirect('app:form_list')
 
         else:
             print(form.errors)
@@ -379,7 +421,7 @@ def create_ptw_form(request):
 
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['vendor','supervisor','manager'])
 def form_list(request):
     submissions = PTWForm.objects.none()
@@ -407,11 +449,11 @@ def form_list(request):
     })
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['vendor','supervisor','manager'])
 def edit_form(request, pk):
     submission = get_object_or_404(PTWForm, pk=pk)
-    
+
     if request.method == 'POST':
         print("Form is being submitted")
         form = PTWSubmissionForm(request.POST, request.FILES, instance=submission)
@@ -431,7 +473,7 @@ def edit_form(request, pk):
                     submission.save()
 
             # After status update, redirect to the form list
-            return redirect('form_list')
+            return redirect('app:form_list')
         else:
             print(form.errors)
 
@@ -443,20 +485,20 @@ def edit_form(request, pk):
 
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['vendor'])
 def delete_form(request, pk):
     # Fetch the FormSubmission object or return a 404 if it doesn't exist
     submission = get_object_or_404(PTWForm, pk=pk)
-    
+
     # Delete the submission
     submission.delete()
 
     # Redirect to the form list page after deletion
-    return redirect('form_list')
+    return redirect('app:form_list')
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 
 def view_form(request, pk):
     # Get the form submission by its primary key (pk)
@@ -469,28 +511,28 @@ def view_form(request, pk):
 
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['supervisor'])
 def approve_supervisor(request, pk):
     submission = get_object_or_404(PTWForm, pk=pk)
     if submission.status == 'supervisor_signed':
         submission.status = 'awaiting_manager'  # Change status to 'awaiting supervisor approval'
         submission.save()
-    return redirect('form_list')
+    return redirect('app:form_list')
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['supervisor'])
 def disapprove_supervisor(request, pk):
     submission = get_object_or_404(PTWForm, pk=pk)
-    
+
     if request.user.groups.filter(name='supervisor').exists():  # Check if the user is a supervisor
         submission.status = 'disapproved'  # Change the status to 'disapproved'
         submission.save()  # Save the updated status
-    return redirect('form_list')
+    return redirect('app:form_list')
 
 # View to approve a submission (Manager Approval)
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['manager'])
 def approve_manager(request, pk):
     submission = get_object_or_404(PTWForm, pk=pk)
@@ -502,230 +544,21 @@ def approve_manager(request, pk):
         message = f"Dear {submission.user.get_full_name()},\n\nYour PTW form located at '{submission.location}' has been approved by the manager.\n\nThank you."
 
         send_mail_to_user_and_supervisors(submission.user.email, subject, message)
-    return redirect('form_list')
+    return redirect('app:form_list')
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['manager'])
 def disapprove_manager(request, pk):
     submission = get_object_or_404(PTWForm, pk=pk)
 
-    if request.user.groups.filter(name='manager').exists(): 
-        submission.status = 'disapproved' 
-        submission.save()  
-    return redirect('form_list')
+    if request.user.groups.filter(name='manager').exists():
+        submission.status = 'disapproved'
+        submission.save()
+    return redirect('app:form_list')
 
 
-# def generate_pdf(request, pk):
-#     # Fetch the submission object from the database
-#     submission = get_object_or_404(PTWForm, pk=pk)
-
-#     # Create the HTTP response with content type as PDF
-#     response = HttpResponse(content_type='application/pdf')
-#     response['Content-Disposition'] = 'inline; filename="submission_details.pdf"'
-
-#     # Create a canvas object to draw on the PDF
-#     pdf = canvas.Canvas(response, pagesize=A4)
-    
-#     # Define the starting position for the text
-#     x = 100
-#     y = 800  # Starting y position (top of the page)
-
-#     # Set font for the PDF
-#     pdf.setFont("Helvetica", 12)
-
-#     # Add Form ID
-#     pdf.drawString(x, y, f"Form ID: {submission.id}")
-#     y -= 20
-    
-#     # Add Date Submitted
-#     pdf.drawString(x, y, f"Date Submitted: {submission.date_submitted}")
-#     y -= 20
-
-#     # Add User (Full Name)
-#     pdf.drawString(x, y, f"User: {submission.user.get_full_name()}")
-#     y -= 20
-
-#     # Add Location
-#     pdf.drawString(x, y, f"Location: {submission.location}")
-#     y -= 20
-
-#     # Add Status
-#     pdf.drawString(x, y, f"Status: {submission.status}")
-#     y -= 40
-
-#     # Add Work Description
-#     pdf.drawString(x, y, f"Work Description: {submission.work_description}")
-#     y -= 20
-
-#     # Add Equipment/Tools/Materials
-#     pdf.drawString(x, y, f"Equipment/Tools/Materials To Be Used: {submission.equipment_tools_materials}")
-#     y -= 20
-
-#     # Add Risk Assessment
-#     pdf.drawString(x, y, f"Risk Assessment: {submission.risk_assessment_done}")
-#     y -= 20
-
-#     # Add Attachments (handling different file types)
-#     if submission.attachment:
-#         pdf.drawString(x, y, f"Attachments: {submission.attachment.url}")
-#     else:
-#         pdf.drawString(x, y, "Attachments: No attachment")
-#     y -= 20
-
-#     # Additional Field (if available)
-#     if submission.additional_field:
-#         pdf.drawString(x, y, f"Additional Field: {submission.additional_field}")
-#         y -= 20
-
-#     # Add Start Date/Time
-#     pdf.drawString(x, y, f"Start Date/Time: {submission.start_datetime}")
-#     y -= 20
-
-#     # Add Duration
-#     pdf.drawString(x, y, f"Duration: {submission.duration}")
-#     y -= 20
-
-#     # Add Days
-#     pdf.drawString(x, y, f"Days: {submission.days}")
-#     y -= 20
-
-#     # Add Number of Workers
-#     pdf.drawString(x, y, f"Number of Workers: {submission.workers_count}")
-#     y -= 20
-
-#     # Add Department Responsible For Work
-#     pdf.drawString(x, y, f"Department Responsible For Work: {submission.department}")
-#     y -= 20
-
-#     # Add Contractor
-#     pdf.drawString(x, y, f"Contractor: {submission.contractor}")
-#     y -= 20
-
-#     # Add Contractor Supervisor
-#     pdf.drawString(x, y, f"Name of Contractor Supervisor: {submission.contractor_supervisor}")
-#     y -= 20
-
-#     # Add Work Place (loop through all items in the related field)
-#     if submission.work_place.all():
-#         pdf.drawString(x, y, "Work Place:")
-#         y -= 20
-#         for item in submission.work_place.all():
-#             pdf.drawString(x + 20, y, f"- {item}")
-#             y -= 20
-#     else:
-#         pdf.drawString(x, y, "Work Place: None")
-#         y -= 20
-
-#     # Add Work Location Isolation (loop through all items in the related field)
-#     if submission.work_location_isolation.all():
-#         pdf.drawString(x, y, "Work Location to be Isolated By:")
-#         y -= 20
-#         for item in submission.work_location_isolation.all():
-#             pdf.drawString(x + 20, y, f"- {item}")
-#             y -= 20
-#     else:
-#         pdf.drawString(x, y, "Work Location to be Isolated By: None")
-#         y -= 20
-
-#     # Add Personal Safety Equipment (loop through all items in the related field)
-#     if submission.personal_safety.all():
-#         pdf.drawString(x, y, "Personal Safety Equipment:")
-#         y -= 20
-#         for item in submission.personal_safety.all():
-#             pdf.drawString(x + 20, y, f"- {item}")
-#             y -= 20
-#     else:
-#         pdf.drawString(x, y, "Personal Safety Equipment: None")
-#         y -= 20
-
-#     # Additional Precautions (if available)
-#     if submission.additional_precautions:
-#         pdf.drawString(x, y, f"Additional Precautions: {submission.additional_precautions}")
-#         y -= 20
-
-#     # Supervisor Name
-#     pdf.drawString(x, y, f"The Work May Proceed Under The Supervisor of: {submission.supervisor_name}")
-#     y -= 20
-
-#     # Permit Applicant Name
-#     pdf.drawString(x, y, f"Permit Applicant Name: {submission.applicant_name}")
-#     y -= 20
-
-#     # Permit Applicant Date
-#     pdf.drawString(x, y, f"Date: {submission.applicant_date}")
-#     y -= 20
-
-#     # Applicant Signature
-#     pdf.drawString(x, y, f"Applicant Signature: {submission.applicant_sign}")
-#     y -= 20
-
-#     # Facility Manager Name
-#     pdf.drawString(x, y, f"Facility Manager Name: {submission.facility_manager_name}")
-#     y -= 20
-
-#     # Facility Manager Date
-#     pdf.drawString(x, y, f"Date: {submission.facility_manager_date}")
-#     y -= 20
-
-#     # Facility Manager Signature
-#     pdf.drawString(x, y, f"Facility Manager Signature: {submission.facility_manager_sign}")
-#     y -= 20
-
-#     # Certificates Required
-#     pdf.drawString(x, y, f"Certificates Required For This Report: {submission.certificates_required}")
-#     y -= 20
-
-#     # Project Attachments (handling file types)
-#     if submission.project_attachment:
-#         pdf.drawString(x, y, f"Project Attachments: {submission.project_attachment.url}")
-#     else:
-#         pdf.drawString(x, y, "Project Attachments: No attachment")
-#     y -= 20
-
-#     # Date Valid From
-#     pdf.drawString(x, y, f"Date Valid From: {submission.valid_from}")
-#     y -= 20
-
-#     # Date Valid To
-#     pdf.drawString(x, y, f"Date Valid To: {submission.valid_to}")
-#     y -= 20
-
-#     # Initials
-#     pdf.drawString(x, y, f"Initials: {submission.initials}")
-#     y -= 20
-
-#     # Contractor Name
-#     pdf.drawString(x, y, f"Contractor Name: {submission.contractor_name}")
-#     y -= 20
-
-#     # Contractor Date
-#     pdf.drawString(x, y, f"Date: {submission.contractor_date}")
-#     y -= 20
-
-#     # Contractor Signature
-#     pdf.drawString(x, y, f"Contractor Signature: {submission.contractor_sign}")
-#     y -= 20
-
-#     # HSEQ Name
-#     pdf.drawString(x, y, f"HSEQ Name: {submission.hseq_name}")
-#     y -= 20
-
-#     # HSEQ Date
-#     pdf.drawString(x, y, f"HSEQ Date: {submission.hseq_date}")
-#     y -= 20
-
-#     # HSEQ Signature
-#     pdf.drawString(x, y, f"HSEQ Signature: {submission.hseq_sign}")
-#     y -= 20
-
-#     # Finally, save the PDF
-#     pdf.showPage()
-#     pdf.save()
-
-#     return response
-
-
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['staff'])
 def create_nhis_form(request):
     if request.method == 'POST':
@@ -739,8 +572,18 @@ def create_nhis_form(request):
             # Save the Many-to-Many relationship
             form.save_m2m()
 
+            # Get all managers' emails for notification
+            try:
+                manager_group = Group.objects.get(name='manager')
+                all_managers = User.objects.filter(groups=manager_group)
+                manager_emails = [manager.email for manager in all_managers if manager.email]
+            except Group.DoesNotExist:
+                manager_emails = []
 
-            subject = "New PTW Form Submission"
+            # For debugging
+            print(f"Manager emails: {manager_emails}")
+
+            subject = "New NHIS Form Submission"
             message = f"""
             A user has submitted a NHIS form.
 
@@ -754,14 +597,26 @@ def create_nhis_form(request):
             You can view the form details in the admin panel.
             """
 
-            # Send the email to the signed-in user and supervisors
-            send_mail_to_user_and_supervisors(submission.user.email, subject, message)
-            return redirect('nhis_list')
+            # Send the email to the signed-in user and location managers
+            recipient_list = [request.user.email] + manager_emails
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    settings.EMAIL_HOST_USER,
+                    recipient_list,
+                    fail_silently=False,
+                )
+            except Exception as e:
+                print(f"Email sending failed: {e}")
+
+            return redirect('app:nhis_list')
     else:
         form = NHISSubmissionForm()
     return render(request, 'nhis.html', {'form':form})
 
 
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['staff','supervisor','manager'])
 def nhis_list(request):
     submissions = NHISForm.objects.none()
@@ -774,12 +629,42 @@ def nhis_list(request):
             location_filter = NHISForm.objects.filter(location__icontains=location_search)
         else:
             location_filter = NHISForm.objects.all()
+
+        # We're not using location filtering for now
+        # Uncomment this if we want to filter by location in the future
+        # try:
+        #     member = Member.objects.get(user=request.user)
+        #     user_location = member.location
+        # except Member.DoesNotExist:
+        #     user_location = None
+
         # Check user roles and filter submissions accordingly
         if request.user.groups.filter(name='staff').exists():
-            # Vendor can only see their own submissions
+            # Staff can only see their own submissions
             submissions = location_filter.filter(user=request.user)
+
         elif request.user.groups.filter(name='manager').exists():
-            submissions = location_filter.filter(status__in=['awaiting_manager', 'closed'])
+            # Managers can see all submissions (for reporting purposes)
+            submissions = location_filter
+
+            # If we want to filter by location in the future, we can uncomment this code
+            # if user_location:
+            #     # Get users in the same location group
+            #     location_group_name = f"location_{user_location}"
+            #     try:
+            #         location_group = Group.objects.get(name=location_group_name)
+            #         users_in_location = User.objects.filter(groups=location_group)
+            #         # Filter submissions by users in the same location and appropriate status
+            #         submissions = location_filter.filter(
+            #             user__in=users_in_location,
+            #             status__in=['awaiting_manager', 'closed']
+            #         )
+            #     except Group.DoesNotExist:
+            #         # Fallback to all submissions if location group doesn't exist
+            #         submissions = location_filter.filter(status__in=['awaiting_manager', 'closed'])
+            # else:
+            #     # Fallback if user has no location
+            #     submissions = location_filter.filter(status__in=['awaiting_manager', 'closed'])
 
         elif request.user.groups.filter(name='supervisor').exists():
             submissions = location_filter
@@ -789,56 +674,56 @@ def nhis_list(request):
     })
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['supervisor'])
 def approve_nhis_supervisor(request, pk):
     submission = get_object_or_404(NHISForm, pk=pk)
     if submission.status == 'awaiting_supervisor':
-        submission.status = 'awaiting_manager'  # Change status to 'awaiting supervisor approval'
+        submission.status = 'approved'  # Change status directly to approved
         submission.save()
-    return redirect('nhis_list')
+    return redirect('app:nhis_list')
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['supervisor'])
 def disapprove_nhis_supervisor(request, pk):
     submission = get_object_or_404(NHISForm, pk=pk)
-    
+
     if request.user.groups.filter(name='supervisor').exists():  # Check if the user is a supervisor
         submission.status = 'denied'  # Change the status to 'disapproved'
         submission.save()  # Save the updated status
-    return redirect('nhis_list')
+    return redirect('app:nhis_list')
 
 # View to approve a submission (Manager Approval)
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['manager'])
 def approve_nhis_manager(request, pk):
     submission = get_object_or_404(NHISForm, pk=pk)
     if submission.status == 'awaiting_manager':
-        submission.status = 'closed' 
+        submission.status = 'closed'
         submission.save()
 
         subject = "NHIS Form Approved"
         message = f"Dear {submission.user.get_full_name()},\n\nYour NHIS form located at '{submission.location}', \n\n Dated  '{submission.date}' has been approved by the manager.\n\nThank you."
 
         send_mail_to_user_and_supervisors(submission.user.email, subject, message)
-    return redirect('nhis_list')
+    return redirect('app:nhis_list')
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['manager'])
 def disapprove_nhis_manager(request, pk):
     submission = get_object_or_404(NHISForm, pk=pk)
 
-    if request.user.groups.filter(name='manager').exists(): 
-        submission.status = 'denied' 
-        submission.save()  
-    return redirect('nhis_list')
+    if request.user.groups.filter(name='manager').exists():
+        submission.status = 'denied'
+        submission.save()
+    return redirect('app:nhis_list')
 
 
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['staff'])
 def edit_nhis_form(request, pk):
     submission = get_object_or_404(NHISForm, pk=pk)
@@ -846,26 +731,26 @@ def edit_nhis_form(request, pk):
         form = NHISSubmissionForm(request.POST, instance=submission)
         if form.is_valid():
             form.save()
-            return redirect('nhis_list')  # Redirect to the list view after updating
+            return redirect('app:nhis_list')  # Redirect to the list view after updating
     else:
         form = NHISSubmissionForm(instance=submission)
     return render(request, 'edit_nhis_form.html', {'form': form, 'submission': submission})
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['staff'])
 def delete_nhis_form(request, pk):
     # Fetch the FormSubmission object or return a 404 if it doesn't exist
     submission = get_object_or_404(NHISForm, pk=pk)
-    
+
     # Delete the submission
     submission.delete()
 
     # Redirect to the form list page after deletion
-    return redirect('nhis_list')
+    return redirect('app:nhis_list')
 
 
-@login_required(login_url='login')
+@login_required(login_url='app:login')
 def view_nhis_form(request, pk):
     # Get the form submission by its primary key (pk)
     submission = get_object_or_404(NHISForm, pk=pk)
@@ -876,7 +761,7 @@ def view_nhis_form(request, pk):
 
 
 
-@login_required
+@login_required(login_url='app:login')
 @allowed_users(allowed_roles=['admin', 'supervisor'])
 def form_report(request):
     start_date = None
@@ -927,7 +812,7 @@ def form_report(request):
             ptw_submissions = ptw_submissions.filter(date_submitted__lte=end_date)
 
         # Combine both form submissions into one list
-        
+
         for submission in nhis_submissions:
             report_data.append({
                 'form_type': 'NHIS',
@@ -948,7 +833,7 @@ def form_report(request):
                 'status': submission.status,
             })
 
-        
+
 
         for submission in report_data:
             pie_chart_data_form_type[submission['form_type']] += 1
@@ -962,7 +847,7 @@ def form_report(request):
 
     if 'download_pdf' in request.GET:
         if not report_data:
-             return HttpResponse('''                
+             return HttpResponse('''
                          <h1>There are no submissions made within specified</h1>
                          <button onclick="window.history.back();">Go Back</button>
                      ''')
@@ -977,7 +862,7 @@ def form_report(request):
         response['Content-Disposition'] = f'attachment; filename="form_report_{datetime.now().strftime("%Y%m%d%H%M%S")}.pdf"'
         return response
 
-    
+
 
     if 'export' in request.GET:
         return export_to_excel(report_data)
@@ -994,9 +879,10 @@ def form_report(request):
     })
 
 
+
 def export_to_excel(report_data):
     if not report_data:
-             return HttpResponse('''                
+             return HttpResponse('''
                          <h1>There are no submissions made within specified</h1>
                          <button onclick="window.history.back();">Go Back</button>
                      ''')
@@ -1004,7 +890,7 @@ def export_to_excel(report_data):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Form Report"
-    
+
     # Define the headers for the Excel sheet
     headers = ['Form Type', 'Form ID', 'Date Submitted', 'User', 'Location', 'Status']
     ws.append(headers)
@@ -1035,11 +921,11 @@ def export_to_excel(report_data):
 def generate_pie_chart(data, labels, title, colors):
     data = [d for d in data if d > 0]  # Only keep non-zero values
     labels = [labels[i] for i in range(len(data))]  # Corresponding labels
-         
+
     fig, ax = plt.subplots(figsize=(4, 4))  # Pie chart size
     ax.pie(data, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors, wedgeprops={'edgecolor': 'black'})
     ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-         
+
              # Save the pie chart to a temporary file in memory
     img_buffer = BytesIO()
     plt.savefig(img_buffer, format='PNG')
@@ -1051,11 +937,11 @@ def generate_pie_chart(data, labels, title, colors):
 def generate_pdf(report_data, pie_chart_data_form_type, pie_chart_data_status):
     buffer = BytesIO()
     p = canvas.Canvas(buffer, pagesize=A4)
-    
+
     # Title
     p.setFont("Helvetica-Bold", 16)
     p.drawString(200, 800, "Form Report")
-    
+
     # Date Range
     p.setFont("Helvetica", 12)
     p.drawString(50, 730, f"Start Date: {report_data['start_date']}")

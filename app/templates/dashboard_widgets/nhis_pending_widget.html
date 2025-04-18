@@ -1,0 +1,41 @@
+{% load static %}
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-clipboard-list me-2"></i> Pending NHIS Forms
+        </h5>
+        <a href="{% url 'app:nhis_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="card-body">
+        {% if request.pending_forms %}
+            <div class="list-group">
+                {% for form in request.pending_forms %}
+                    <a href="{{ form.url }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ form.form_number }}</h6>
+                            <small class="text-muted">{{ form.date|date:"M d" }}</small>
+                        </div>
+                        <p class="mb-1">
+                            {% if form.type == 'danger' %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% elif form.type == 'warning' %}
+                                <span class="badge bg-warning">Awaiting Supervisor</span>
+                            {% elif form.type == 'info' %}
+                                <span class="badge bg-info">Awaiting Manager</span>
+                            {% endif %}
+                            {% if form.submitter %}
+                                Submitted by {{ form.submitter }}
+                            {% endif %}
+                        </p>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <p class="mb-0">No pending forms requiring your attention.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>

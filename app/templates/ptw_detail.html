@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block title %}PTW Form Detail{% endblock title %}
+
+{% block extra_head %}
+<meta name="no-auto-refresh" content="true">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        PTW Form {{ submission.form_number }}
+                        {% if submission.status == 'approved' %}
+                            <span class="badge bg-success">Approved</span>
+                        {% elif submission.status == 'rejected_by_supervisor' or submission.status == 'rejected_by_manager' %}
+                            <span class="badge bg-danger">Rejected</span>
+                        {% elif submission.status == 'awaiting_supervisor' %}
+                            <span class="badge bg-warning">Awaiting Supervisor</span>
+                        {% elif submission.status == 'awaiting_manager' %}
+                            <span class="badge bg-info">Awaiting Manager</span>
+                        {% endif %}
+                    </h6>
+                    <div>
+                        {% if user.groups.filter(name='supervisor').exists and submission.status == 'awaiting_supervisor' %}
+                            <a href="{% url 'app:approve_ptw_supervisor' submission.id %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-check"></i> Approve
+                            </a>
+                            <a href="{% url 'app:reject_ptw_supervisor' submission.id %}" class="btn btn-danger btn-sm">
+                                <i class="fas fa-times"></i> Reject
+                            </a>
+                        {% endif %}
+                        
+                        {% if user.groups.filter(name='manager').exists and submission.status == 'awaiting_manager' %}
+                            <a href="{% url 'app:approve_ptw_manager' submission.id %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-check"></i> Approve
+                            </a>
+                            <a href="{% url 'app:reject_ptw_manager' submission.id %}" class="btn btn-danger btn-sm">
+                                <i class="fas fa-times"></i> Reject
+                            </a>
+                        {% endif %}
+                        
+                        {% if user == submission.user and submission.status in 'rejected_by_supervisor,rejected_by_manager' %}
+                            <a href="{% url 'app:edit_ptw_form' submission.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'app:ptw_comment' submission.id %}" class="btn btn-info btn-sm">
+                            <i class="fas fa-comment"></i> Comment
+                        </a>
+                        
+                        <a href="{% url 'app:ptw_pdf' submission.id %}" class="btn btn-secondary btn-sm" target="_blank">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Form Information</h5>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th>Form Number</th>
+                                    <td>{{ submission.form_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Submitted By</th>
+                                    <td>{{ submission.user.get_full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Date Submitted</th>
+                                    <td>{{ submission.date_submitted }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Location</th>
+                                    <td>{{ submission.location }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Status</th>
+                                    <td>{{ submission.get_status_display }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Approval Information</h5>
+                            <table class="table table-bordered">
+                                {% if submission.supervisor_approved_by %}
+                                <tr>
+                                    <th>Supervisor Approval</th>
+                                    <td>
+                                        Approved by {{ submission.supervisor_approved_by.get_full_name }} 
+                                        on {{ submission.supervisor_approved_at }}
+                                        {% if submission.status == 'approved' or submission.status == 'awaiting_manager' or submission.status == 'manager_signed' %}
+                                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Checkmark.svg/1200px-Checkmark.svg.png" 
+                                                 alt="Approved" style="height: 30px; width: auto;">
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                
+                                {% if submission.manager_approved_by %}
+                                <tr>
+                                    <th>Manager Approval</th>
+                                    <td>
+                                        Approved by {{ submission.manager_approved_by.get_full_name }} 
+                                        on {{ submission.manager_approved_at }}
+                                        {% if submission.status == 'approved' %}
+                                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Checkmark.svg/1200px-Checkmark.svg.png" 
+                                                 alt="Approved" style="height: 30px; width: auto;">
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                
+                                {% if submission.rejected_by %}
+                                <tr>
+                                    <th>Rejected By</th>
+                                    <td>{{ submission.rejected_by.get_full_name }} on {{ submission.rejected_at }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Rejection Reason</th>
+                                    <td class="text-danger">{{ submission.rejection_reason }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5>Work Details</h5>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th>Work Description</th>
+                                    <td>{{ submission.work_description }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Work Location</th>
+                                    <td>{{ submission.work_location }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Start Date</th>
+                                    <td>{{ submission.start_date }}</td>
+                                </tr>
+                                <tr>
+                                    <th>End Date</th>
+                                    <td>{{ submission.end_date }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Work Type</th>
+                                    <td>{{ submission.work_type }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Display other PTW form sections here -->
+                    
+                    <!-- Comments Section -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5>Comments</h5>
+                            <div class="card">
+                                <div class="card-body">
+                                    {% if submission.comments.all %}
+                                        {% for comment in submission.comments.all %}
+                                            <div class="comment mb-3 p-3 {% if comment.user == submission.user %}bg-light{% else %}bg-white{% endif %} border rounded">
+                                                <div class="d-flex justify-content-between">
+                                                    <strong>{{ comment.user.get_full_name }}</strong>
+                                                    <small class="text-muted">{{ comment.created_at }}</small>
+                                                </div>
+                                                <p class="mb-0 mt-2">{{ comment.comment }}</p>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-muted">No comments yet.</p>
+                                    {% endif %}
+                                    
+                                    <a href="{% url 'app:ptw_comment' submission.id %}" class="btn btn-primary btn-sm mt-3">
+                                        <i class="fas fa-comment"></i> Add Comment
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

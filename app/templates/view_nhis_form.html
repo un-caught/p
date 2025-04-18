@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% block title %}View NHIR{% endblock title %}
 
+{% block extra_head %}
+<meta name="no-auto-refresh" content="true">
+{% endblock %}
+
 {% block content %}
 
 <div class="container mt-5">
@@ -80,7 +84,7 @@
         </table>
 
         <div class="mt-4">
-            <a href="{% url 'nhis_list' %}" class="btn btn-secondary">Back to Report</a>
+            <a href="{% url 'app:nhis_list' %}" class="btn btn-secondary">Back to Report</a>
         </div>
     </div>
 </div>
